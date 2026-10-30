@@ -140,7 +140,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 | McDonald's | 104 | Marca en OSM (cifra publicada: 108) |
 | El Corte Inglés | 12 | Grandes almacenes; sin supermercados ni outlets |
 | IKEA | 3 | Solo grandes tiendas |
-| Centros comerciales | 35 | Con nombre y ≥ 2 ha, más Xanadú. Pendiente: revisar centros conocidos que el filtro de superficie dejó fuera |
+| Centros comerciales | 35 | Con nombre y ≥ 2 ha, más Xanadú. Pendiente: revisión en `/revision/centros` (11 propuestos: 8 que dejó fuera el filtro de superficie y La Gavia, Las Rosas y Heron City, que no están marcados como centro comercial en OSM) |
 | Universidades | 22 | Campus de ≥ 5 ha, sin duplicados |
 | Mercados municipales | 49 | Mercados cubiertos «Mercado…» |
 | Cementerios | 71 | Con nombre y ≥ 0,5 ha |

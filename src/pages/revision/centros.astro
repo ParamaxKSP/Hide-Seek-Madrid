@@ -1,0 +1,14 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { MallReview, type Mall } from "@/components/review/MallReview";
+import base from "../../../data-src/base_datos.json";
+
+// Solo los campos que hacen falta en la página.
+const malls: Mall[] = (base.malls as Mall[])
+    .filter((m) => m.n !== "(sin nombre)")
+    .map(({ n, la, lo, a, p }) => ({ n, la, lo, a, p }));
+---
+
+<Layout>
+    <MallReview client:only="react" malls={malls} />
+</Layout>

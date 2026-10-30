@@ -24,6 +24,8 @@ export default defineConfig({
                 // Incluye los datos de Madrid para que la app funcione con mala cobertura.
                 globPatterns: ["**/*.{js,css,html,png,ico,svg,json,wasm}"],
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+                // Las páginas de revisión no son la app: que no se sustituyan por ella.
+                navigateFallbackDenylist: [/\/revision\//],
                 // El fondo del mapa viene de CARTO/OSM: se guardan las teselas
                 // ya vistas para que se vean también sin conexión.
                 runtimeCaching: [
