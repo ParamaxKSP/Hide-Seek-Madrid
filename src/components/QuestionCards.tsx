@@ -1,3 +1,4 @@
+export { ManualQuestionComponent } from "./cards/manual";
 export { MatchingQuestionComponent } from "./cards/matching";
 export { MeasuringQuestionComponent } from "./cards/measuring";
 export { RadiusQuestionComponent } from "./cards/radius";

@@ -317,4 +317,15 @@ describe("datos locales de Madrid", async () => {
             true,
         );
     });
+
+    it("conoce las cuatro divisiones administrativas y las nuevas medidas", async () => {
+        const c = await api.findAdminBoundary(SOL.lat, SOL.lng, 4);
+        const p = await api.findAdminBoundary(SOL.lat, SOL.lng, 6);
+        expect(c?.properties?.name).toMatch(/Madrid/);
+        expect(p?.properties?.name).toBe("Madrid");
+        expect((await api.madridCategoryPoints("water")).length).toBe(50);
+        const st = await api.madridCategoryPoints("stations");
+        expect(st.length).toBeGreaterThan(300);
+        expect(st.map((s) => s.properties?.name)).not.toContain("Zarzalejo");
+    });
 });

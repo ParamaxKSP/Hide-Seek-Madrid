@@ -22,6 +22,7 @@ import type { Question } from "@/maps/schema";
 
 import { AddQuestionDialog } from "./AddQuestionDialog";
 import {
+    ManualQuestionComponent,
     MatchingQuestionComponent,
     MeasuringQuestionComponent,
     RadiusQuestionComponent,
@@ -63,6 +64,13 @@ const renderQuestion = (question: Question) => {
         case "measuring":
             return (
                 <MeasuringQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        case "manual":
+            return (
+                <ManualQuestionComponent
                     data={question.data}
                     questionKey={question.key}
                 />

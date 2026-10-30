@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDebounce } from "@/hooks/useDebounce";
 import { allowGooglePlusCodes, isLoading } from "@/lib/context";
+import { getGpsPosition } from "@/lib/gps";
 import { cn } from "@/lib/utils";
 import { determineName, geocode, ICON_COLORS } from "@/maps/api";
 
@@ -428,44 +429,14 @@ export const LatitudeLongitude = ({
                     >
                         <Button
                             variant="outline"
-                            onClick={() => {
-                                if (!navigator || !navigator.geolocation)
-                                    return alert("Geolocation not supported");
-
+                            onClick={async () => {
                                 isLoading.set(true);
-
-                                toast.promise(
-                                    new Promise<GeolocationPosition>(
-                                        (resolve, reject) => {
-                                            navigator.geolocation.getCurrentPosition(
-                                                resolve,
-                                                reject,
-                                                {
-                                                    maximumAge: 0,
-                                                    enableHighAccuracy: true,
-                                                },
-                                            );
-                                        },
-                                    )
-                                        .then((position) => {
-                                            onChange(
-                                                position.coords.latitude,
-                                                position.coords.longitude,
-                                            );
-                                        })
-                                        .finally(() => {
-                                            isLoading.set(false);
-                                        }),
-                                    {
-                                        pending: "Fetching location",
-                                        success: "Location fetched",
-                                        error: "Could not fetch location",
-                                    },
-                                    { autoClose: 500 },
-                                );
+                                const pos = await getGpsPosition();
+                                isLoading.set(false);
+                                if (pos) onChange(pos.lat, pos.lng);
                             }}
                             disabled={disabled}
-                            title="Set to current location"
+                            title="Usar mi ubicación (GPS)"
                         >
                             <LocateIcon />
                         </Button>

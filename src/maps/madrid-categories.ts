@@ -69,6 +69,16 @@ export const MADRID_CATEGORIES = {
         filter: '["jlm:cat"="rivers"]',
         geometry: "line",
     },
+    stations: {
+        label: "Estaciones",
+        filter: "[railway=station]",
+        geometry: "point",
+    },
+    water: {
+        label: "Masas de agua",
+        filter: "[natural=water]",
+        geometry: "point",
+    },
 } as const satisfies Record<string, MadridCategory>;
 
 export type MadridCategoryId = keyof typeof MADRID_CATEGORIES;
@@ -87,4 +97,12 @@ export const madridCategoryOf = (type: unknown): MadridCategoryId | null => {
     if (typeof type !== "string" || !type.startsWith("madrid-")) return null;
     const id = type.slice("madrid-".length);
     return id in MADRID_CATEGORIES ? (id as MadridCategoryId) : null;
+};
+
+/** Divisiones administrativas en la Comunidad de Madrid (niveles de OSM). */
+export const ADMIN_LEVEL_OPTIONS = {
+    4: "1.ª división: comunidad",
+    6: "2.ª división: provincia",
+    8: "3.ª división: municipio",
+    9: "4.ª división: distrito",
 };

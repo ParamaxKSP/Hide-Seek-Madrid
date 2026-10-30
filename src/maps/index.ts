@@ -30,7 +30,8 @@ import type { Question, Questions } from "./schema";
 export * from "./geo-utils";
 
 export const hiderifyQuestion = async (question: Question) => {
-    if (question.data.drag) {
+    // Una pregunta vetada no se responde.
+    if (question.data.drag && !question.data.vetoed) {
         switch (question.id) {
             case "radius":
                 question.data = await hiderifyRadius(question.data);
@@ -57,7 +58,12 @@ export const determinePlanningPolygon = async (
     question: Question,
     planningModeEnabled: boolean,
 ) => {
-    if (planningModeEnabled && question.data.drag && !question.data.hidden) {
+    if (
+        planningModeEnabled &&
+        question.data.drag &&
+        !question.data.hidden &&
+        !question.data.vetoed
+    ) {
         switch (question.id) {
             case "radius":
                 return radiusPlanningPolygon(question.data);
@@ -77,7 +83,8 @@ export async function adjustMapGeoDataForQuestion(
     question: any,
     mapGeoData: any,
 ) {
-    if (question.data.hidden) {
+    // Oculta o vetada (sin respuesta): no cambia el mapa.
+    if (question.data.hidden || question.data.vetoed) {
         return mapGeoData;
     }
 

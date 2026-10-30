@@ -33,6 +33,8 @@ import {
 import { isLoading, questions } from "@/lib/context";
 import { cn } from "@/lib/utils";
 
+import { QuestionCost } from "./QuestionCost";
+
 export const QuestionCard = ({
     children,
     questionKey,
@@ -95,7 +97,15 @@ export const QuestionCard = ({
                             isCollapsed && "max-h-0",
                         )}
                     >
-                        <SidebarMenu>{children}</SidebarMenu>
+                        <QuestionCost questionKey={questionKey} />
+                        <SidebarMenu
+                            className={cn(
+                                $questions.find((q) => q.key === questionKey)
+                                    ?.data.vetoed && "opacity-50",
+                            )}
+                        >
+                            {children}
+                        </SidebarMenu>
                         <div className="flex gap-2 pt-2 px-2 justify-center">
                             <Dialog>
                                 <DialogTrigger asChild>

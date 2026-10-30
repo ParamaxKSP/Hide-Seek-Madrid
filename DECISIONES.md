@@ -64,6 +64,21 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - Para que los sitios con el mismo nombre se distingan (los 192 Mercadona, las 18 «Plaza de Toros»…), se les añade el municipio (o el distrito en Madrid capital) y, si hace falta, la estación más cercana (a 2 km o menos). Si aun así coinciden, un número de norte a sur. Ejemplo: «Mercadona · Centro · Tribunal». La lista está en `data-src/nombres_distinguidos.txt`.
 - Los sitios repetidos (mismo nombre a menos de 50 m) se quitan: el Mercado de Villaverde Alto estaba dos veces.
 
+## Coste, veto y randomize
+
+- Cada pregunta muestra su coste según el reglamento (partida mediana): Matching y Measuring, el escondido roba 3 y se queda 1; radar y termómetro, 2 y 1; tentáculos, 4 y 2; fotos, 1 y 1.
+- **Repetir** una pregunta multiplica el coste: la 2.ª vez ×2 (roba 3 y se queda 1, dos veces), la 3.ª ×3… Cuentan como la misma pregunta sus variantes (p. ej. el zoo con o sin zonas de escondite, o un radar de 5 km y otro de 5000 m).
+- **Veto:** la pregunta cuenta como hecha (repetirla cuesta más), no cambia el mapa, no se responde en modo escondido y no da cartas.
+- **Randomize:** sortea otra pregunta no hecha de la misma categoría y la pone en el mismo sitio; la original no cuenta como hecha. El catálogo es el del reglamento para partida mediana más las reglas de casa (`src/maps/catalog.ts`).
+- Las preguntas que la app no dibuja (fotos, calle o camino, masa de tierra, frontera, costa y nivel del mar, hasta que se haga la altitud) se apuntan como «sin mapa» para que cuenten en el coste y el sorteo.
+- En Madrid, la 1.ª y la 2.ª división administrativa (comunidad y provincia) son la misma: el Matching siempre da «sí» y el Measuring mide al borde de la Comunidad. Frontera y costa no existen dentro del mapa: respuesta nula.
+- El termómetro guarda la distancia de la pregunta (1, 5 o 15 km) y avisa de cuánto falta por recorrer en línea recta.
+
+## GPS
+
+- Las preguntas nuevas se crean en la ubicación del GPS del buscador (se puede desactivar en el diálogo de añadir); si el GPS falla, en el centro del mapa.
+- El botón de ubicación de cada pregunta espera como mucho 15 s, avisa si la precisión es peor de ±100 m y explica en español por qué falla (sin permiso, sin GPS…).
+
 ## Exclusiones del mapa
 
 - **No** se excluye el aeropuerto: su zona pública es un escondite válido.

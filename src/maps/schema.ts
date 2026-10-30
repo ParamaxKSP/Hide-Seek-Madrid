@@ -79,6 +79,10 @@ const thermometerQuestionSchema = z
         drag: z.boolean().default(true),
         collapsed: z.boolean().default(false),
         hidden: z.boolean().default(false),
+        /** Vetada por el escondido: cuenta como hecha pero no cambia el mapa. */
+        vetoed: z.boolean().default(false),
+        /** Distancia de la pregunta («después de viajar X km»), en km. */
+        distance: z.number().positive().optional(),
     })
     .transform((question) => {
         if (question.colorA === question.colorB) {
@@ -102,6 +106,8 @@ const ordinaryBaseQuestionSchema = z.object({
     color: iconColorSchema.default(randomColor),
     collapsed: z.boolean().default(false),
     hidden: z.boolean().default(false),
+    /** Vetada por el escondido: cuenta como hecha pero no cambia el mapa. */
+    vetoed: z.boolean().default(false),
 });
 
 const getDefaultUnit = () => {
@@ -116,6 +122,8 @@ const radiusQuestionSchema = ordinaryBaseQuestionSchema.extend({
     radius: z.number().min(0, "You cannot have a negative radius").default(50),
     unit: unitsSchema.default(getDefaultUnit),
     within: z.boolean().default(true),
+    /** Radar «a elegir»: los buscadores eligen la distancia. */
+    chosen: z.boolean().default(false),
 });
 
 const tentacleLocationsFifteen = z.union([
@@ -283,7 +291,7 @@ const zoneMatchingQuestionsSchema = baseMatchingQuestionSchema.extend({
                 z.literal(10),
             ]),
         })
-        .default(() => ({ adminLevel: 3 }) as { adminLevel: 3 }),
+        .default(() => ({ adminLevel: 8 }) as { adminLevel: 8 }),
 });
 
 const homeGameMatchingQuestionsSchema = baseMatchingQuestionSchema.extend({
@@ -470,6 +478,10 @@ const madridMeasuringQuestionSchema = baseMeasuringQuestionSchema.extend({
         z.literal("madrid-cemeteries").describe("Cementerios"),
         z.literal("madrid-castles").describe("Palacios y castillos"),
         z.literal("madrid-rivers").describe("Ríos"),
+        z
+            .literal("madrid-stations")
+            .describe("Estaciones (Metro, ML y Cercanías)"),
+        z.literal("madrid-water").describe("Masas de agua"),
     ]),
 });
 
@@ -480,6 +492,34 @@ export const measuringQuestionSchema = z.union([
     hidingZoneMeasuringQuestionsSchema.describe("Hiding Zone Mode"),
     homeGameMeasuringQuestionsSchema.describe("Hiding Zone Mode"),
 ]);
+
+/**
+ * Pregunta que la app no dibuja (fotos, «calle o camino», costa…): solo se
+ * registra para llevar la cuenta del coste, el veto y el randomize.
+ */
+export const questionCategorySchema = z.enum([
+    "matching",
+    "measuring",
+    "radius",
+    "thermometer",
+    "tentacles",
+    "photo",
+]);
+
+const manualQuestionSchema = z.object({
+    category: questionCategorySchema,
+    /** Identificador en el catálogo (src/maps/catalog.ts). */
+    catalogId: z.string(),
+    /** Respuesta apuntada a mano. */
+    answer: z.string().default(""),
+    /** Dónde se hizo (si se conoce). */
+    lat: z.number().optional(),
+    lng: z.number().optional(),
+    drag: z.boolean().default(true),
+    collapsed: z.boolean().default(false),
+    hidden: z.boolean().default(false),
+    vetoed: z.boolean().default(false),
+});
 
 export const questionSchema = z.union([
     z.object({
@@ -507,11 +547,18 @@ export const questionSchema = z.union([
         key: z.number().default(Math.random),
         data: matchingQuestionSchema,
     }),
+    z.object({
+        id: z.literal("manual"),
+        key: z.number().default(Math.random),
+        data: manualQuestionSchema,
+    }),
 ]);
 
 export const questionsSchema = z.array(questionSchema);
 
 export type Units = z.infer<typeof unitsSchema>;
+export type QuestionCategory = z.infer<typeof questionCategorySchema>;
+export type ManualQuestion = z.infer<typeof manualQuestionSchema>;
 export type RadiusQuestion = z.infer<typeof radiusQuestionSchema>;
 export type ThermometerQuestion = z.infer<typeof thermometerQuestionSchema>;
 export type TentacleQuestion = z.infer<typeof tentacleQuestionSchema>;

@@ -24,7 +24,7 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
-import { MADRID_GROUP } from "@/maps/madrid-categories";
+import { ADMIN_LEVEL_OPTIONS, MADRID_GROUP } from "@/maps/madrid-categories";
 import {
     determineMatchingBoundary,
     findMatchingPlaces,
@@ -78,18 +78,8 @@ export const MatchingQuestionComponent = ({
                 <>
                     <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                         <Select
-                            trigger="OSM Zone"
-                            options={{
-                                2: "OSM Zone 2 (Country)",
-                                3: "OSM Zone 3 (region in Japan)",
-                                4: "OSM Zone 4 (prefecture in Japan)",
-                                5: "OSM Zone 5",
-                                6: "OSM Zone 6",
-                                7: "OSM Zone 7",
-                                8: "OSM Zone 8",
-                                9: "OSM Zone 9",
-                                10: "OSM Zone 10",
-                            }}
+                            trigger="División administrativa"
+                            options={ADMIN_LEVEL_OPTIONS}
                             value={data.cat.adminLevel.toString()}
                             onValueChange={(value) =>
                                 questionModified(
@@ -356,7 +346,7 @@ export const MatchingQuestionComponent = ({
                             }
                             // The category should be defined such that no error is thrown if this is a zone question.
                             if (!(data as any).cat) {
-                                (data as any).cat = { adminLevel: 3 };
+                                (data as any).cat = { adminLevel: 8 };
                             }
                             questionModified((data.type = value));
                             return;
@@ -369,7 +359,7 @@ export const MatchingQuestionComponent = ({
 
                         // The category should be defined such that no error is thrown if this is a zone question.
                         if (!(data as any).cat) {
-                            (data as any).cat = { adminLevel: 3 };
+                            (data as any).cat = { adminLevel: 8 };
                         }
                         questionModified((data.type = value));
                     }}

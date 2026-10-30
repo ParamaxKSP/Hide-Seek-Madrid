@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 
 import { LatitudeLongitude } from "@/components/LatLngPicker";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import {
+    MENU_ITEM_CLASSNAME,
+    SidebarMenuItem,
+} from "@/components/ui/sidebar-l";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { defaultUnit } from "@/lib/context";
 import {
@@ -73,6 +78,16 @@ export const ThermometerQuestionComponent = ({
         };
     }, [data.latA, data.lngA, data.latB, data.lngB, DISTANCE_UNIT, hasCoords]);
 
+    const distanceKm =
+        distanceValue === null
+            ? null
+            : distanceValue *
+              (DISTANCE_UNIT === "meters"
+                  ? 0.001
+                  : DISTANCE_UNIT === "miles"
+                    ? 1.609344
+                    : 1);
+
     const unitLabel =
         DISTANCE_UNIT === "meters"
             ? "Meters"
@@ -121,12 +136,40 @@ export const ThermometerQuestionComponent = ({
                 disabled={!data.drag || $isLoading}
             />
 
+            <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
+                <Select
+                    trigger="Distancia de la pregunta"
+                    options={{
+                        "1": "Después de viajar 1 km",
+                        "5": "Después de viajar 5 km",
+                        "15": "Después de viajar 15 km",
+                    }}
+                    value={data.distance ? String(data.distance) : ""}
+                    onValueChange={(value) =>
+                        questionModified((data.distance = Number(value)))
+                    }
+                    disabled={!data.drag || $isLoading}
+                />
+            </SidebarMenuItem>
+
             {distanceValue !== null && (
-                <div className="px-2 text-sm text-muted-foreground">
+                <div
+                    className={cn(
+                        "px-2 text-sm text-muted-foreground",
+                        data.distance &&
+                            distanceKm !== null &&
+                            distanceKm < data.distance &&
+                            "text-orange-500",
+                    )}
+                >
                     Distance:{" "}
                     <span className="font-medium text-foreground">
                         {distanceValue.toFixed(3)} {unitLabel}
                     </span>
+                    {data.distance &&
+                        distanceKm !== null &&
+                        distanceKm < data.distance &&
+                        ` · faltan ${(data.distance - distanceKm).toFixed(2)} km en línea recta`}
                 </div>
             )}
 

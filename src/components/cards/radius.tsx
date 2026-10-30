@@ -3,6 +3,7 @@ import { useStore } from "@nanostores/react";
 import { LatitudeLongitude } from "@/components/LatLngPicker";
 import { PositiveNumberInput } from "@/components/PositiveNumberInput";
 import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
 import {
     MENU_ITEM_CLASSNAME,
     SidebarMenuItem,
@@ -17,7 +18,13 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
+import { CATALOG, catalogEntry, catalogIdOf } from "@/maps/catalog";
 import type { RadiusQuestion } from "@/maps/schema";
+
+/** Distancias de radar del reglamento. */
+const RADAR_OPTIONS = Object.fromEntries(
+    CATALOG.filter((e) => e.category === "radius").map((e) => [e.id, e.label]),
+);
 
 import { QuestionCard } from "./base";
 
@@ -59,6 +66,24 @@ export const RadiusQuestionComponent = ({
             hidden={data.hidden}
             setHidden={(hidden) => questionModified((data.hidden = hidden))}
         >
+            <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
+                <Select
+                    trigger="Pregunta de radar"
+                    options={RADAR_OPTIONS}
+                    value={catalogIdOf({
+                        id: "radius",
+                        key: questionKey,
+                        data,
+                    })}
+                    onValueChange={(value) => {
+                        const entry = catalogEntry(value);
+                        if (!entry?.make) return;
+                        Object.assign(data, entry.make.data);
+                        questionModified();
+                    }}
+                    disabled={!data.drag || $isLoading}
+                />
+            </SidebarMenuItem>
             <SidebarMenuItem>
                 <div className={cn(MENU_ITEM_CLASSNAME, "gap-2 flex flex-row")}>
                     <PositiveNumberInput
