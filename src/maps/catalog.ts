@@ -1,10 +1,15 @@
 /**
- * Catálogo de preguntas para partida MEDIANA (reglamento de Hide+Seek) más
- * las reglas de casa de Madrid. Sirve para:
+ * Catálogo de preguntas del reglamento de Hide+Seek (por tamaño de partida)
+ * más las reglas de casa de Madrid. Sirve para:
  *  - saber cuántas veces se ha hecho ya una pregunta (el coste se multiplica),
  *  - sortear otra pregunta no hecha de la misma categoría (randomize).
  */
 import type { Question, QuestionCategory } from "@/maps/schema";
+
+export type GameSize = "small" | "medium" | "large";
+
+const MEDIUM_UP: GameSize[] = ["medium", "large"];
+const LARGE: GameSize[] = ["large"];
 
 export interface CategoryInfo {
     label: string;
@@ -30,6 +35,8 @@ export interface CatalogEntry {
     make?: { id: Exclude<Question["id"], "manual">; data: Record<string, any> };
     /** Aclaración para los jugadores (p. ej. respuesta nula en Madrid). */
     note?: string;
+    /** Tamaños de partida en los que existe (por defecto, todos). */
+    sizes?: GameSize[];
 }
 
 const match = (
@@ -174,27 +181,38 @@ export const CATALOG: CatalogEntry[] = [
     },
 
     // --- Termómetro (robar 2, quedarse 1) ---
-    ...[1, 5, 15].map(
-        (km): CatalogEntry => ({
+    ...(
+        [
+            [1, undefined],
+            [5, undefined],
+            [15, MEDIUM_UP],
+            [75, LARGE],
+        ] as const
+    ).map(
+        ([km, sizes]): CatalogEntry => ({
             id: `thermometer:${km}`,
             category: "thermometer",
             label: `${km} km`,
             make: { id: "thermometer", data: { distance: km } },
+            sizes: sizes ? [...sizes] : undefined,
         }),
     ),
 
-    // --- Tentáculos (robar 4, quedarse 2) ---
+    // --- Tentáculos (robar 4, quedarse 2); no hay en partida pequeña ---
     ...(
         [
-            ["museum", "Museos a 2 km"],
-            ["library", "Bibliotecas a 2 km"],
-            ["cinema", "Cines a 2 km"],
-            ["hospital", "Hospitales a 2 km"],
-            ["madrid-mercadona", "Mercadona a 2 km"],
-            ["madrid-mcdonalds", "McDonald's a 2 km"],
+            ["museum", "Museos a 2 km", 2],
+            ["library", "Bibliotecas a 2 km", 2],
+            ["cinema", "Cines a 2 km", 2],
+            ["hospital", "Hospitales a 2 km", 2],
+            ["madrid-mercadona", "Mercadona a 2 km", 2],
+            ["madrid-mcdonalds", "McDonald's a 2 km", 2],
+            ["zoo", "Zoos a 25 km", 25],
+            ["aquarium", "Acuarios a 25 km", 25],
+            ["theme_park", "Parques de atracciones a 25 km", 25],
         ] as const
     ).map(
-        ([k, l]): CatalogEntry => ({
+        ([k, l, km]): CatalogEntry => ({
             id: `tentacles:${k}`,
             category: "tentacles",
             label: l,
@@ -202,35 +220,49 @@ export const CATALOG: CatalogEntry[] = [
                 id: "tentacles",
                 data: {
                     locationType: k,
-                    radius: 2,
+                    radius: km,
                     unit: "kilometers",
                     location: false,
                 },
             },
+            sizes: km === 25 ? LARGE : MEDIUM_UP,
         }),
     ),
+    {
+        id: "tentacles:metro-lines",
+        category: "tentacles",
+        label: "Líneas de metro a 25 km",
+        sizes: LARGE,
+    },
 
     // --- Fotos (robar 1, quedarse 1): la app no las dibuja ---
-    ...[
-        "Cualquier edificio visible desde la estación",
-        "Estructura más alta en tu línea de visión",
-        "Calle más ancha",
-        "Árbol",
-        "Tú (selfie)",
-        "El cielo",
-        "Edificio más alto visible desde la estación",
-        "Trazar la calle o camino más cercano",
-        "2 edificios",
-        "Interior de un restaurante",
-        "Parque",
-        "Pasillo de supermercado",
-        "Lugar de culto",
-        "Andén",
-    ].map(
-        (label, i): CatalogEntry => ({
+    ...(
+        [
+            ["Cualquier edificio visible desde la estación"],
+            ["Estructura más alta en tu línea de visión"],
+            ["Calle más ancha"],
+            ["Árbol"],
+            ["Tú (selfie)"],
+            ["El cielo"],
+            ["Edificio más alto visible desde la estación", MEDIUM_UP],
+            ["Trazar la calle o camino más cercano", MEDIUM_UP],
+            ["2 edificios", MEDIUM_UP],
+            ["Interior de un restaurante", MEDIUM_UP],
+            ["Parque", MEDIUM_UP],
+            ["Pasillo de supermercado", MEDIUM_UP],
+            ["Lugar de culto", MEDIUM_UP],
+            ["Andén", MEDIUM_UP],
+            ["1 km de calles trazadas", LARGE],
+            ["Montaña más alta visible desde la estación", LARGE],
+            ["Masa de agua más grande de tu zona", LARGE],
+            ["5 edificios", LARGE],
+        ] as [string, GameSize[]?][]
+    ).map(
+        ([label, sizes], i): CatalogEntry => ({
             id: `photo:${i + 1}`,
             category: "photo",
             label,
+            sizes,
         }),
     ),
 ];
@@ -326,13 +358,20 @@ export const costMultiplier = (questions: Question[], key: number): number => {
     );
 };
 
-/** Preguntas de la misma categoría que aún no se han hecho. */
+export const availableIn = (entry: CatalogEntry, size: GameSize) =>
+    !entry.sizes || entry.sizes.includes(size);
+
+/** Preguntas de la misma categoría que aún no se han hecho en este tamaño de partida. */
 export const unaskedEntries = (
     questions: Question[],
     category: QuestionCategory,
+    size: GameSize = "medium",
 ): CatalogEntry[] => {
     const asked = new Set(questions.map(catalogIdOf));
-    return CATALOG.filter((e) => e.category === category && !asked.has(e.id));
+    return CATALOG.filter(
+        (e) =>
+            e.category === category && availableIn(e, size) && !asked.has(e.id),
+    );
 };
 
 /**
@@ -343,10 +382,11 @@ export const randomizeQuestion = (
     questions: Question[],
     key: number,
     random: () => number = Math.random,
+    size: GameSize = "medium",
 ): { question: Record<string, any>; entry: CatalogEntry } | null => {
     const original = questions.find((q) => q.key === key);
     if (!original) return null;
-    const options = unaskedEntries(questions, categoryOf(original));
+    const options = unaskedEntries(questions, categoryOf(original), size);
     if (options.length === 0) return null;
     const entry = options[Math.floor(random() * options.length)];
     const d: any = original.data;

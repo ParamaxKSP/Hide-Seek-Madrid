@@ -198,7 +198,7 @@ const adminAsRelation = (f: AdminFeature, id: number) => {
     };
 };
 
-const adminFeatures = async (): Promise<AdminFeature[]> => {
+export const adminFeatures = async (): Promise<AdminFeature[]> => {
     const d = await loadMadridData();
     const comunidad = d.comunidad;
     const provincia: AdminFeature = {

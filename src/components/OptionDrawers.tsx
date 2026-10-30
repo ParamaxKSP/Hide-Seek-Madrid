@@ -12,7 +12,6 @@ import {
 import {
     additionalMapGeoLocations,
     allowGooglePlusCodes,
-    alwaysUsePastebin,
     animateMapMovements,
     autoSave,
     autoZoom,
@@ -35,7 +34,6 @@ import {
     mapGeoLocation,
     overpassCustomHost,
     overpassHost,
-    pastebinApiKey,
     permanentOverlay,
     planningModeEnabled,
     polyGeoJSON,
@@ -46,17 +44,11 @@ import {
     triggerLocalRefresh,
     useCustomStations,
 } from "@/lib/context";
-import {
-    cn,
-    compress,
-    decompress,
-    fetchFromPastebin,
-    shareOrFallback,
-    uploadToPastebin,
-} from "@/lib/utils";
+import { cn, compress, decompress, shareOrFallback } from "@/lib/utils";
 import { OVERPASS_HOSTS } from "@/maps/api/constants";
 import { questionsSchema } from "@/maps/schema";
 
+import { ConfigDialog } from "./ConfigDialog";
 import { LatitudeLongitude } from "./LatLngPicker";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -73,8 +65,10 @@ import { UnitSelect } from "./UnitSelect";
 
 const HIDING_ZONE_URL_PARAM = "hz";
 const HIDING_ZONE_COMPRESSED_URL_PARAM = "hzc";
-const PASTEBIN_URL_PARAM = "pb";
-const FETCH_URL_PARAM = "url";
+/** Enlace de partida: …/#partida=<datos comprimidos>. */
+const GAME_HASH = "partida";
+/** Más largo que esto, mejor mandar un archivo. */
+const MAX_LINK_LENGTH = 16000;
 
 export const OptionDrawers = ({ className }: { className?: string }) => {
     useStore(triggerLocalRefresh);
@@ -89,8 +83,6 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
     const $planningMode = useStore(planningModeEnabled);
     const $baseTileLayer = useStore(baseTileLayer);
     const $thunderforestApiKey = useStore(thunderforestApiKey);
-    const $pastebinApiKey = useStore(pastebinApiKey);
-    const $alwaysUsePastebin = useStore(alwaysUsePastebin);
     const $followMe = useStore(followMe);
     const $customInitPref = useStore(customInitPreference);
     const $overpassHost = useStore(overpassHost);
@@ -116,91 +108,32 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
     }, [$defaultUnit]);
 
     useEffect(() => {
+        const clean = () =>
+            window.history.replaceState({}, "", window.location.pathname);
+        // Partida compartida: los datos van detrás de «#» y nunca llegan al servidor.
+        const hash = window.location.hash.match(
+            new RegExp(`^#${GAME_HASH}=([A-Za-z0-9_-]+)$`),
+        );
         const params = new URL(window.location.toString()).searchParams;
         const hidingZoneOld = params.get(HIDING_ZONE_URL_PARAM);
-        const hidingZoneCompressed = params.get(
-            HIDING_ZONE_COMPRESSED_URL_PARAM,
-        );
-        const pastebinId = params.get(PASTEBIN_URL_PARAM);
-        const fetchUrl = params.get(FETCH_URL_PARAM);
+        const hidingZoneCompressed =
+            hash?.[1] ?? params.get(HIDING_ZONE_COMPRESSED_URL_PARAM);
 
         if (hidingZoneOld !== null) {
-            // Legacy base64 encoding
+            // Enlaces antiguos de la app original (base64).
             try {
                 loadHidingZone(atob(hidingZoneOld));
-                // Remove hiding zone parameter after initial load
-                window.history.replaceState({}, "", window.location.pathname);
+                clean();
             } catch (e) {
-                toast.error(`Invalid hiding zone settings: ${e}`);
+                toast.error(`Enlace de partida no válido: ${e}`);
             }
-        } else if (hidingZoneCompressed !== null) {
-            // Modern compressed format
-            decompress(hidingZoneCompressed).then((data) => {
-                try {
+        } else if (hidingZoneCompressed) {
+            decompress(hidingZoneCompressed)
+                .then((data) => {
                     loadHidingZone(data);
-                    // Remove hiding zone parameter after initial load
-                    window.history.replaceState(
-                        {},
-                        "",
-                        window.location.pathname,
-                    );
-                } catch (e) {
-                    toast.error(`Invalid hiding zone settings: ${e}`);
-                }
-            });
-        } else if (pastebinId !== null) {
-            fetchFromPastebin(pastebinId)
-                .then((data) => {
-                    try {
-                        loadHidingZone(data);
-                        // Remove pb parameter after initial load
-                        window.history.replaceState(
-                            {},
-                            "",
-                            window.location.pathname,
-                        );
-                        toast.success(
-                            "Successfully loaded data from Pastebin link!",
-                        );
-                    } catch (e) {
-                        toast.error(`Invalid data from Pastebin: ${e}`);
-                    }
+                    clean();
                 })
-                .catch((error) => {
-                    console.error("Failed to fetch from Pastebin:", error);
-                    toast.error(
-                        `Failed to load from Pastebin: ${error.message}`,
-                    );
-                });
-        } else if (fetchUrl !== null) {
-            fetch(fetchUrl)
-                .then((response) => {
-                    if (!response.ok)
-                        throw `${response.status} ${response.statusText}`;
-                    return response.text();
-                })
-                .then((data) => {
-                    try {
-                        loadHidingZone(data);
-                        // Remove url parameter after initial load
-                        window.history.replaceState(
-                            {},
-                            "",
-                            window.location.pathname,
-                        );
-                        toast.success(
-                            `Successfully loaded data from ${fetchUrl}`,
-                        );
-                    } catch (e) {
-                        toast.error(`Invalid data from ${fetchUrl}: ${e}`);
-                    }
-                })
-                .catch((error) => {
-                    console.error(`Failed to fetch from ${fetchUrl}:`, error);
-                    toast.error(
-                        `Failed to load from ${fetchUrl}: ${error.message}`,
-                    );
-                });
+                .catch(() => toast.error("El enlace de partida está roto."));
         }
     }, []);
 
@@ -324,12 +257,14 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                 .toISOString()
                 .replace(/[:.]/g, "-")
                 .slice(0, 19);
-            a.download = `jetlag-hiding-zone-${timestamp}.json`;
+            a.download = `partida-${timestamp}.json`;
             document.body.appendChild(a);
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            toast.success("Hiding zone saved to file", { autoClose: 2000 });
+            toast.success("Partida guardada en un archivo", {
+                autoClose: 2000,
+            });
         } catch (e) {
             console.error("Failed to save file:", e);
             toast.error(`Failed to save file: ${e}`);
@@ -370,6 +305,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     e.target.value = "";
                 }}
             />
+            <ConfigDialog />
             <Button
                 className="shadow-md"
                 onClick={saveToFile}
@@ -387,73 +323,41 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
             <Button
                 className="shadow-md"
                 onClick={async () => {
-                    const hidingZoneString = JSON.stringify($hidingZone);
                     let compressedData;
                     try {
-                        compressedData = await compress(hidingZoneString);
+                        compressedData = await compress(
+                            JSON.stringify($hidingZone),
+                        );
                     } catch (error) {
                         console.error("Compression failed:", error);
-                        toast.error(`Failed to prepare data for sharing`);
+                        toast.error("No se pudo preparar la partida.");
                         return;
                     }
 
-                    const baseUrl = `${window.location.protocol}//${window.location.host}${window.location.pathname}`;
-                    let shareUrl = `${baseUrl}?${HIDING_ZONE_COMPRESSED_URL_PARAM}=${compressedData}`;
+                    const baseUrl = `${window.location.origin}${window.location.pathname}`;
+                    const shareUrl = `${baseUrl}#${GAME_HASH}=${compressedData}`;
 
-                    if ($alwaysUsePastebin || shareUrl.length > 2000) {
-                        if ($pastebinApiKey) {
-                            try {
-                                toast.info(
-                                    "Data is being shared via Pastebin...",
-                                );
-                                const pastebinUrl = await uploadToPastebin(
-                                    $pastebinApiKey,
-                                    hidingZoneString,
-                                );
-                                const pasteId = pastebinUrl.substring(
-                                    pastebinUrl.lastIndexOf("/") + 1,
-                                );
-                                shareUrl = `${baseUrl}?${PASTEBIN_URL_PARAM}=${pasteId}`;
-                                toast.success(
-                                    "Successfully uploaded to Pastebin! URL is ready to be shared.",
-                                );
-                            } catch (error) {
-                                console.error("Pastebin upload failed:", error);
-                                toast.warning(
-                                    "Pastebin upload failed, falling back to file download.",
-                                );
-                                saveToFile();
-                                return;
-                            }
-                        } else {
-                            toast.info(
-                                "Data is too large for a URL — saving to file instead.",
-                            );
-                            saveToFile();
-                            return;
-                        }
+                    if (shareUrl.length > MAX_LINK_LENGTH) {
+                        toast.info(
+                            "La partida es demasiado grande para un enlace: se descarga como archivo para que lo mandes.",
+                        );
+                        saveToFile();
+                        return;
                     }
 
-                    // Show platform native share sheet if possible
-                    await shareOrFallback(shareUrl).then((result) => {
-                        console.log(`result ${result}`);
-                        if (result === false) {
-                            return toast.error(
-                                `Clipboard not supported. Try manually copying/pasting: ${shareUrl}`,
-                                { className: "p-0 w-[1000px]" },
-                            );
-                        }
-
-                        if (result === "clipboard") {
-                            toast.success(
-                                "Hiding zone URL copied to clipboard",
-                                {
-                                    autoClose: 2000,
-                                },
-                            );
-                        }
-                    });
+                    // Menú de compartir del móvil o, si no hay, portapapeles.
+                    const result = await shareOrFallback(shareUrl);
+                    if (result === false) {
+                        toast.error(`No se pudo copiar. Enlace: ${shareUrl}`, {
+                            className: "p-0 w-[1000px]",
+                        });
+                    } else if (result === "clipboard") {
+                        toast.success("Enlace de la partida copiado", {
+                            autoClose: 2000,
+                        });
+                    }
                 }}
+                title="Compartir la partida (zona y preguntas) por enlace"
                 data-tutorial-id="share-questions-button"
             >
                 Share
@@ -581,33 +485,6 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                 </p>
                             </div>
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <div className="flex flex-col items-center gap-2">
-                                <Label>Pastebin API Key</Label>
-                                <Input
-                                    type="text"
-                                    value={$pastebinApiKey}
-                                    id="pastebinApiKey"
-                                    onChange={(e) =>
-                                        pastebinApiKey.set(e.target.value)
-                                    }
-                                    placeholder="Enter your Pastebin API key"
-                                />
-                                <p className="text-xs text-gray-500">
-                                    Optional. If set, large game data will be
-                                    shared via Pastebin URL; otherwise it falls
-                                    back to a JSON file download. Create a key{" "}
-                                    <a
-                                        href="https://pastebin.com/doc_api"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-500 cursor-pointer"
-                                    >
-                                        here
-                                    </a>
-                                    .
-                                </p>
-                            </div>
-                            <Separator className="bg-slate-300 w-[280px]" />
                             <Label>Overpass API Host</Label>
                             <Select
                                 trigger="Overpass API host"
@@ -686,19 +563,6 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                             !$animateMapMovements,
                                         );
                                     }}
-                                />
-                            </div>
-                            <div className="flex flex-row items-center gap-2">
-                                <label className="text-2xl font-semibold font-poppins">
-                                    Force Pastebin for sharing?
-                                </label>
-                                <Checkbox
-                                    checked={$alwaysUsePastebin}
-                                    onCheckedChange={() =>
-                                        alwaysUsePastebin.set(
-                                            !$alwaysUsePastebin,
-                                        )
-                                    }
                                 />
                             </div>
                             <div className="flex flex-row items-center gap-2">

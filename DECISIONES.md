@@ -7,6 +7,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - GitHub Pages en `https://paramaxksp.github.io/Hide-Seek-Madrid/` (HTTPS, necesario para el GPS).
 - La URL no se comparte públicamente; buscadores bloqueados (`noindex` y `robots.txt`).
 - Sin analítica: se han quitado Google Analytics y Microsoft Clarity del proyecto original.
+- Sin servicios de terceros para compartir: se ha quitado Pastebin y la carga de datos desde cualquier web (`?url=`).
 - El texto del reglamento oficial y las fotos del libro **no** se suben al repositorio.
 
 ## Funciones confirmadas
@@ -78,6 +79,25 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 
 - Las preguntas nuevas se crean en la ubicación del GPS del buscador (se puede desactivar en el diálogo de añadir); si el GPS falla, en el centro del mapa.
 - El botón de ubicación de cada pregunta espera como mucho 15 s, avisa si la precisión es peor de ±100 m y explica en español por qué falla (sin permiso, sin GPS…).
+
+## Configuraciones de partida
+
+- Una configuración guarda: la zona (Comunidad, municipios y distritos, o un polígono dibujado), el tamaño de partida, el radio de las zonas de escondite, qué tipos de estación cuentan y las líneas y estaciones quitadas.
+- **Tamaño de partida** (reglamento): pequeña y mediana, zonas de 500 m; grande, de 1 km. Tiempo para esconderse: 30, 60 y 180 min. Cambia las preguntas disponibles: sin tentáculos en pequeña; termómetro de 15 km desde mediana y de 75 km en grande; tentáculos de 25 km (zoos, acuarios, parques de atracciones y líneas de metro) y 4 fotos más en grande.
+- **Predefinidas:**
+
+| Configuración | Zona | Tamaño |
+|---|---|---|
+| Toda la Comunidad | 8.019 km², 355 estaciones | Mediana |
+| Área metropolitana | Madrid y los 14 municipios con Metro o Metro Ligero: 1.261 km², 327 estaciones | Mediana |
+| Madrid capital | 604 km², 220 estaciones | Mediana |
+| Almendra central | Los 7 distritos de dentro de la M-30 (aprox.): 42 km², 79 estaciones | Pequeña |
+
+- Cada jugador puede guardar la configuración actual con un nombre («Mis configuraciones»).
+- **Compartir sin servidor:** por enlace (la configuración va comprimida detrás de `#`, que el navegador nunca envía a la web) o por archivo `.json`. Al abrir el enlace, la app pregunta antes de cargarla y la guarda en «Mis configuraciones».
+- Cargar una configuración empieza una partida nueva: se borran las preguntas (la app avisa).
+- **Compartir la partida** (zona y preguntas) también va por enlace con `#`; si no cabe (más de 16.000 caracteres), se descarga como archivo.
+- Pendiente: que las correcciones de sitios hechas en partida viajen con la configuración (cuando exista la función de corregir sitios).
 
 ## Exclusiones del mapa
 

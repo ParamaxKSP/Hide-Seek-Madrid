@@ -14,9 +14,15 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { isLoading, questionModified, questions } from "@/lib/context";
+import {
+    gameSize,
+    isLoading,
+    questionModified,
+    questions,
+} from "@/lib/context";
 import { cn } from "@/lib/utils";
 import {
+    availableIn,
     catalogEntry,
     catalogIdOf,
     CATEGORY_INFO,
@@ -27,6 +33,8 @@ import {
 } from "@/maps/catalog";
 import { questionSchema } from "@/maps/schema";
 
+const SIZE_LABEL = { small: "pequeña", medium: "mediana", large: "grande" };
+
 const TIMES = ["", "", "dos", "tres", "cuatro", "cinco", "seis"];
 
 /**
@@ -36,6 +44,7 @@ const TIMES = ["", "", "dos", "tres", "cuatro", "cinco", "seis"];
 export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
     const question = $questions.find((q) => q.key === questionKey);
     if (!question) return null;
 
@@ -44,7 +53,7 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
     const entry = catalogEntry(catalogIdOf(question));
     const times = costMultiplier($questions, questionKey);
     const vetoed = question.data.vetoed;
-    const left = unaskedEntries($questions, category).length;
+    const left = unaskedEntries($questions, category, $gameSize).length;
 
     const cost = vetoed
         ? "Vetada: sin respuesta y sin cartas"
@@ -68,6 +77,11 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
             >
                 {cost}
             </div>
+            {entry && !availableIn(entry, $gameSize) && (
+                <div className="text-orange-400">
+                    Esta pregunta no existe en partida {SIZE_LABEL[$gameSize]}.
+                </div>
+            )}
             {entry?.note && (
                 <div className="text-muted-foreground italic">{entry.note}</div>
             )}
@@ -114,6 +128,8 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
                                     const result = randomizeQuestion(
                                         $questions,
                                         questionKey,
+                                        Math.random,
+                                        $gameSize,
                                     );
                                     if (!result) {
                                         toast.info(

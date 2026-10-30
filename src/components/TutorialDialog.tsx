@@ -573,8 +573,8 @@ const tutorialSteps: TutorialStep[] = [
                 in URL
                 <br />• <strong>Compressed Links:</strong> Smaller URLs for
                 complex games
-                <br />• <strong>Pastebin Integration:</strong> For very large
-                game states
+                <br />• <strong>Archivo:</strong> si la partida no cabe en un
+                enlace, se descarga como archivo
                 <br />
                 <br />
                 <strong>What Gets Shared:</strong>
@@ -668,12 +668,6 @@ const tutorialSteps: TutorialStep[] = [
                 <strong>API Integration:</strong>
                 <br />• <strong>Thunderforest API Key:</strong> Enhanced map
                 tiles
-                <br />• <strong>Pastebin API Key:</strong> Improved sharing for
-                large games
-                <br />• <strong>Always Use Pastebin:</strong> Force external
-                hosting for all shares. This is also useful if you want to
-                generate a QR code containing the link, as this makes the QR
-                code much less convoluted.
             </>
         ),
         targetSelector: '[data-tutorial-id="option-questions-button"]',

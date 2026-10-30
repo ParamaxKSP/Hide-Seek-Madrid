@@ -9,6 +9,7 @@ import type {
     OpenStreetMap,
     StationCircle,
 } from "@/maps/api";
+import type { GameSize } from "@/maps/catalog";
 import { extractStationLabel } from "@/maps/geo-utils";
 import {
     type DeepPartial,
@@ -43,26 +44,29 @@ try {
     // Sin localStorage (compilación o navegación privada): se usan los valores por defecto.
 }
 
+/** Zona de juego por defecto: la Comunidad de Madrid entera. */
+export const MADRID_MAP_LOCATION: OpenStreetMap = {
+    type: "Feature",
+    properties: {
+        osm_type: "R",
+        osm_id: 349055,
+        osm_key: "boundary",
+        osm_value: "administrative",
+        type: "state",
+        name: "Comunidad de Madrid",
+        country: "España",
+        countrycode: "ES",
+        extent: [41.16599, -4.57908, 39.88463, -3.05298],
+    },
+    geometry: {
+        type: "Point",
+        coordinates: [40.4168, -3.7038],
+    },
+};
+
 export const mapGeoLocation = persistentAtom<OpenStreetMap>(
     "mapGeoLocation",
-    {
-        type: "Feature",
-        properties: {
-            osm_type: "R",
-            osm_id: 349055,
-            osm_key: "boundary",
-            osm_value: "administrative",
-            type: "state",
-            name: "Comunidad de Madrid",
-            country: "España",
-            countrycode: "ES",
-            extent: [41.16599, -4.57908, 39.88463, -3.05298],
-        },
-        geometry: {
-            type: "Point",
-            coordinates: [40.4168, -3.7038],
-        },
-    },
+    MADRID_MAP_LOCATION,
     {
         encode: JSON.stringify,
         decode: JSON.parse,
@@ -222,6 +226,9 @@ export const animateMapMovements = persistentAtom<boolean>(
         decode: JSON.parse,
     },
 );
+/** Tamaño de partida (reglamento): cambia el radio de escondite y las preguntas disponibles. */
+export const gameSize = persistentAtom<GameSize>("gameSize", "medium");
+
 export const hidingRadius = persistentAtom<number>("hidingRadius", 0.5, {
     encode: JSON.stringify,
     decode: JSON.parse,
@@ -421,16 +428,6 @@ export const followMe = persistentAtom<boolean>("followMe", false, {
 });
 export const defaultCustomQuestions = persistentAtom<boolean>(
     "defaultCustomQuestions",
-    false,
-    {
-        encode: JSON.stringify,
-        decode: JSON.parse,
-    },
-);
-
-export const pastebinApiKey = persistentAtom<string>("pastebinApiKey", "");
-export const alwaysUsePastebin = persistentAtom<boolean>(
-    "alwaysUsePastebin",
     false,
     {
         encode: JSON.stringify,

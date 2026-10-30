@@ -133,4 +133,22 @@ describe("catálogo de preguntas", () => {
         );
         expect(randomizeQuestion(qs, 0)).toBeNull();
     });
+
+    it("las preguntas disponibles dependen del tamaño de partida", () => {
+        const ids = (cat: any, size: any) =>
+            unaskedEntries([], cat, size).map((e) => e.id);
+        expect(ids("tentacles", "small")).toEqual([]);
+        expect(ids("tentacles", "medium")).toContain("tentacles:museum");
+        expect(ids("tentacles", "medium")).not.toContain("tentacles:zoo");
+        expect(ids("tentacles", "large")).toContain("tentacles:zoo");
+        expect(ids("thermometer", "small")).toEqual([
+            "thermometer:1",
+            "thermometer:5",
+        ]);
+        expect(ids("thermometer", "large")).toContain("thermometer:75");
+        expect(ids("photo", "small")).toHaveLength(6);
+        expect(ids("photo", "medium")).toHaveLength(14);
+        expect(ids("photo", "large")).toHaveLength(18);
+        expect(ids("radius", "small")).toHaveLength(10);
+    });
 });

@@ -10,11 +10,6 @@ export const OVERPASS_HOSTS = {
 } as const;
 
 export const GEOCODER_API = "https://photon.komoot.io/api/";
-export const PASTEBIN_API_POST_URL =
-    "https://cors-anywhere.com/https://pastebin.com/api/api_post.php";
-export const PASTEBIN_API_RAW_URL = "https://pastebin.com/raw/";
-export const PASTEBIN_API_RAW_URL_PROXIED =
-    "https://cors-anywhere.com/https://pastebin.com/raw/";
 
 export const ICON_COLORS = {
     black: "#3D3D3D",

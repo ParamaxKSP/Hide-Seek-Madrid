@@ -15,12 +15,13 @@ import { SidebarMenuButton } from "@/components/ui/sidebar-l";
 import {
     addQuestion,
     defaultCustomQuestions,
+    gameSize,
     isLoading,
     leafletMapContext,
     questions,
 } from "@/lib/context";
 import { getGpsPosition, newQuestionsAtGps } from "@/lib/gps";
-import { CATALOG, catalogIdOf } from "@/maps/catalog";
+import { availableIn, CATALOG, catalogIdOf } from "@/maps/catalog";
 
 /**
  * Dónde se crea una pregunta nueva: en la ubicación del GPS si está activado
@@ -124,7 +125,10 @@ export const AddQuestionDialog = ({
         const center = leafletMapContext.get()?.getCenter();
         const asked = new Set(questions.get().map(catalogIdOf));
         const options = CATALOG.filter(
-            (e) => e.category === category && !e.make,
+            (e) =>
+                e.category === category &&
+                !e.make &&
+                availableIn(e, gameSize.get()),
         );
         const entry = options.find((e) => !asked.has(e.id)) ?? options[0];
         addQuestion({
