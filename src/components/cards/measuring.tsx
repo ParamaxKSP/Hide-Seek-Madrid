@@ -13,6 +13,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { t } from "@/i18n";
 import {
     customInitPreference,
     displayHidingZones,
@@ -57,7 +58,7 @@ export const MeasuringQuestionComponent = ({
     const $isLoading = useStore(isLoading);
     const $customInitPref = useStore(customInitPreference);
     const [customDialogOpen, setCustomDialogOpen] = React.useState(false);
-    const label = `Measuring
+    const label = `${t("Medición")}
     ${
         $questions
             .filter((q) => q.id === "measuring")
@@ -73,7 +74,7 @@ export const MeasuringQuestionComponent = ({
                 <>
                     <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                         <Select
-                            trigger="División administrativa"
+                            trigger={t("División administrativa")}
                             options={ADMIN_LEVEL_OPTIONS}
                             value={(
                                 (data as any).cat?.adminLevel ?? 4
@@ -122,10 +123,9 @@ export const MeasuringQuestionComponent = ({
         case "seven11":
             questionSpecific = (
                 <span className="px-2 text-center text-orange-500">
-                    This question will eliminate hiding zones that don&apos;t
-                    fit the criteria. When you click on a zone, the parts of
-                    that zone that don&apos;t satisfy the criteria will be
-                    eliminated.
+                    {t(
+                        "Esta pregunta elimina las zonas de escondite que no cumplen el criterio. Al pulsar una zona se elimina la parte de ella que no lo cumple.",
+                    )}
                 </span>
             );
             break;
@@ -142,8 +142,9 @@ export const MeasuringQuestionComponent = ({
         case "park":
             questionSpecific = (
                 <span className="px-2 text-center text-orange-500">
-                    This question will only influence the map when you click on
-                    a hiding zone in the hiding zone sidebar.
+                    {t(
+                        "Esta pregunta solo cambia el mapa cuando pulsas una zona en la barra de zonas de escondite.",
+                    )}
                 </span>
             );
             break;
@@ -152,7 +153,7 @@ export const MeasuringQuestionComponent = ({
                 questionSpecific = (
                     <>
                         <p className="px-2 mb-1 text-center text-orange-500">
-                            To modify the measuring question, enable it:
+                            {t("Para cambiar la pregunta, actívalo:")}
                             <Checkbox
                                 className="mx-1 my-1"
                                 checked={$drawingQuestionKey === questionKey}
@@ -165,7 +166,9 @@ export const MeasuringQuestionComponent = ({
                                 }}
                                 disabled={!data.drag || $isLoading}
                             />
-                            and use the buttons at the bottom left of the map.
+                            {t(
+                                "y usa los botones de abajo a la izquierda del mapa.",
+                            )}
                         </p>
                         <div className="flex justify-center mb-2">
                             <PresetsDialog
@@ -192,7 +195,7 @@ export const MeasuringQuestionComponent = ({
             locked={!data.drag}
             setLocked={(locked) => questionModified((data.drag = !locked))}
             hidden={data.hidden}
-            setHidden={(hidden) => questionModified((data.hidden = !hidden))}
+            setHidden={(hidden) => questionModified((data.hidden = hidden))}
         >
             <CustomInitDialog
                 open={customDialogOpen}
@@ -226,7 +229,7 @@ export const MeasuringQuestionComponent = ({
             />
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Measuring Type"
+                    trigger={t("Tipo de pregunta")}
                     options={Object.fromEntries(
                         measuringQuestionSchema.options
                             .filter((x) => x.description === NO_GROUP)
@@ -341,7 +344,7 @@ export const MeasuringQuestionComponent = ({
                         $isLoading && "text-muted-foreground",
                     )}
                 >
-                    Result
+                    {t("Resultado")}
                 </Label>
                 <ToggleGroup
                     className="grow"
@@ -355,10 +358,10 @@ export const MeasuringQuestionComponent = ({
                     disabled={!!$hiderMode || !data.drag || $isLoading}
                 >
                     <ToggleGroupItem value="further">
-                        Hider Further
+                        {t("Escondido más lejos")}
                     </ToggleGroupItem>
                     <ToggleGroupItem value="closer">
-                        Hider Closer
+                        {t("Escondido más cerca")}
                     </ToggleGroupItem>
                 </ToggleGroup>
             </div>
@@ -385,14 +388,14 @@ const AdminZoneNameDisplay = ({ data }: { data: MeasuringQuestion }) => {
     if (!zoneInfo) {
         return (
             <div className="flex items-center justify-center w-full h-[3rem] text-muted-foreground text-sm">
-                No zone found
+                {t("No se ha encontrado la zona")}
             </div>
         );
     }
 
     return (
         <div className="flex flex-col items-center w-full h-[3rem]">
-            <Label className="text-xs text-muted-foreground">Zone</Label>
+            <Label className="text-xs text-muted-foreground">{t("Zona")}</Label>
             <span className="font-medium text-sm truncate max-w-full">
                 {zoneInfo.name}
             </span>

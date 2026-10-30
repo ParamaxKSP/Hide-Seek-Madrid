@@ -1,3 +1,4 @@
+import { t } from "@/i18n";
 import type { Units } from "@/maps/schema";
 
 import { Select } from "./ui/select";
@@ -13,11 +14,11 @@ export const UnitSelect = ({
 }) => {
     return (
         <Select
-            trigger="Unit"
+            trigger={t("Unidad")}
             options={{
-                miles: "Miles",
-                kilometers: "Kilometers",
-                meters: "Meters",
+                kilometers: t("Kilómetros"),
+                meters: t("Metros"),
+                miles: t("Millas"),
             }}
             disabled={disabled}
             value={unit}

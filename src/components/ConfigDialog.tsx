@@ -172,7 +172,11 @@ export const ConfigDialog = () => {
 
     return (
         <>
-            <Button className="shadow-md" onClick={() => setOpen(true)}>
+            <Button
+                className="shadow-md"
+                data-tutorial-id="config-button"
+                onClick={() => setOpen(true)}
+            >
                 Configuración
             </Button>
             <input

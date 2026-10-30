@@ -8,6 +8,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog";
+import { t } from "@/i18n";
 
 type Props = {
     data: any;
@@ -18,7 +19,7 @@ type Props = {
 const PresetsDialog: React.FC<Props> = ({
     data,
     presetTypeHint,
-    triggerLabel = "Use presets",
+    triggerLabel = t("Usar plantillas"),
 }) => {
     return (
         <Dialog>
@@ -28,7 +29,7 @@ const PresetsDialog: React.FC<Props> = ({
                 </Button>
             </DialogTrigger>
             <DialogContent>
-                <DialogTitle>Custom Presets</DialogTitle>
+                <DialogTitle>{t("Plantillas")}</DialogTitle>
                 <CustomPresets data={data} presetTypeHint={presetTypeHint} />
             </DialogContent>
         </Dialog>

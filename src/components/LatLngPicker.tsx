@@ -12,6 +12,7 @@ import { toast } from "react-toastify";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDebounce } from "@/hooks/useDebounce";
+import { t } from "@/i18n";
 import { allowGooglePlusCodes, isLoading } from "@/lib/context";
 import { getGpsPosition } from "@/lib/gps";
 import { cn } from "@/lib/utils";
@@ -148,17 +149,17 @@ const LatLngEditForm = ({
         <>
             <Command shouldFilter={false}>
                 <CommandInput
-                    placeholder="Search place..."
+                    placeholder={t("Buscar un sitio…")}
                     onKeyUp={(x) => setInputValue(x.currentTarget.value)}
                     disabled={disabled}
                 />
                 <CommandList>
                     <CommandEmpty>
                         {loading
-                            ? "Loading..."
+                            ? t("Cargando…")
                             : error
-                              ? "Error loading places."
-                              : "No locations found."}
+                              ? t("Error al buscar sitios.")
+                              : t("No se ha encontrado ningún sitio.")}
                     </CommandEmpty>
                     <CommandGroup>
                         {results.map((result) => (
@@ -183,7 +184,7 @@ const LatLngEditForm = ({
                 </CommandList>
             </Command>
             <div className="flex gap-2 items-center">
-                <Label className="min-w-16">Latitude</Label>
+                <Label className="min-w-16">{t("Latitud")}</Label>
                 <Input
                     type="number"
                     value={Math.abs(latitude)}
@@ -208,7 +209,7 @@ const LatLngEditForm = ({
                 </Button>
             </div>
             <div className="flex gap-2 items-center">
-                <Label className="min-w-16">Longitude</Label>
+                <Label className="min-w-16">{t("Longitud")}</Label>
                 <Input
                     type="number"
                     value={Math.abs(longitude)}
@@ -243,7 +244,7 @@ const LatLngEditForm = ({
                             type="text"
                             disabled={disabled}
                             ref={googlePlusCodesRef}
-                            placeholder="i.e., Q9CM+3P Narita, Chiba, Japan"
+                            placeholder={t("p. ej., 8CJ8+GQ Madrid")}
                         />
                         <Button
                             variant="secondary"
@@ -259,7 +260,7 @@ const LatLngEditForm = ({
                                 let codeBase = code.split(" ")[0];
 
                                 if (!olc.isValid(codeBase)) {
-                                    toast.error("Invalid Google Plus code");
+                                    toast.error(t("Plus Code no válido"));
                                     return;
                                 }
 
@@ -276,7 +277,9 @@ const LatLngEditForm = ({
 
                                     if (geo.length === 0) {
                                         toast.error(
-                                            "Could not resolve location for short code",
+                                            t(
+                                                "No se ha podido situar el código corto",
+                                            ),
                                         );
                                         setLoading(false);
                                         return;
@@ -315,7 +318,7 @@ export const LatitudeLongitude = ({
     latitude,
     longitude,
     onChange,
-    label = "Location",
+    label = t("Ubicación"),
     colorName,
     children,
     disabled,
@@ -395,7 +398,7 @@ export const LatitudeLongitude = ({
                                 <Button
                                     disabled={disabled}
                                     variant="outline"
-                                    title="Edit coordinates"
+                                    title={t("Editar coordenadas")}
                                 >
                                     <EditIcon />
                                 </Button>
@@ -403,7 +406,7 @@ export const LatitudeLongitude = ({
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle className="text-2xl">
-                                        Update {label}
+                                        {t("Cambiar: {label}", { label })}
                                     </DialogTitle>
                                 </DialogHeader>
                                 <LatLngEditForm
@@ -414,7 +417,7 @@ export const LatitudeLongitude = ({
                                 />
                                 <DialogFooter>
                                     <DialogClose asChild>
-                                        <Button>Done</Button>
+                                        <Button>{t("Hecho")}</Button>
                                     </DialogClose>
                                 </DialogFooter>
                             </DialogContent>
@@ -436,7 +439,7 @@ export const LatitudeLongitude = ({
                                 if (pos) onChange(pos.lat, pos.lng);
                             }}
                             disabled={disabled}
-                            title="Usar mi ubicación (GPS)"
+                            title={t("Usar mi ubicación (GPS)")}
                         >
                             <LocateIcon />
                         </Button>
@@ -445,7 +448,9 @@ export const LatitudeLongitude = ({
                             onClick={() => {
                                 if (!navigator || !navigator.clipboard) {
                                     toast.error(
-                                        "Clipboard API not supported in your browser",
+                                        t(
+                                            "Tu navegador no permite usar el portapapeles.",
+                                        ),
                                     );
                                     return;
                                 }
@@ -469,23 +474,26 @@ export const LatitudeLongitude = ({
                                                 return;
                                             }
                                             throw new Error(
-                                                "Could not find coordinates in clipboard content",
+                                                t(
+                                                    "No hay coordenadas en el portapapeles",
+                                                ),
                                             );
                                         })
                                         .finally(() => {
                                             isLoading.set(false);
                                         }),
                                     {
-                                        pending: "Reading from clipboard",
-                                        success:
-                                            "Coordinates set from clipboard",
-                                        error: "No valid coordinates found in clipboard",
+                                        pending: t("Leyendo el portapapeles…"),
+                                        success: t("Coordenadas pegadas"),
+                                        error: t(
+                                            "No hay coordenadas válidas en el portapapeles",
+                                        ),
                                     },
                                     { autoClose: 1000 },
                                 );
                             }}
                             disabled={disabled}
-                            title="Paste coordinates from clipboard"
+                            title={t("Pegar coordenadas del portapapeles")}
                         >
                             <ClipboardPasteIcon />
                         </Button>
@@ -494,7 +502,9 @@ export const LatitudeLongitude = ({
                             onClick={() => {
                                 if (!navigator || !navigator.clipboard) {
                                     toast.error(
-                                        "Clipboard API not supported in your browser",
+                                        t(
+                                            "Tu navegador no permite usar el portapapeles.",
+                                        ),
                                     );
                                     return;
                                 }
@@ -506,14 +516,14 @@ export const LatitudeLongitude = ({
                                         )}°${longitude > 0 ? "E" : "W"}`,
                                     ),
                                     {
-                                        pending: "Writing to clipboard...",
-                                        success: "Coordinates copied!",
-                                        error: "An error occurred while copying",
+                                        pending: t("Copiando…"),
+                                        success: t("Coordenadas copiadas"),
+                                        error: t("No se ha podido copiar"),
                                     },
                                     { autoClose: 1000 },
                                 );
                             }}
-                            title="Copy coordinates to clipboard"
+                            title={t("Copiar coordenadas")}
                         >
                             <ClipboardCopyIcon />
                         </Button>

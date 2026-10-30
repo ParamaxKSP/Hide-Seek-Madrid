@@ -10,6 +10,7 @@ import _ from "lodash";
 import osmtogeojson from "osmtogeojson";
 import { toast } from "react-toastify";
 
+import { t } from "@/i18n";
 import {
     hiderMode,
     hidingRadius,
@@ -48,7 +49,7 @@ export const findMatchingPlaces = async (question: MatchingQuestion) => {
                 (
                     await findPlacesInZone(
                         '["aeroway"="aerodrome"]["iata"]', // Only commercial airports have IATA codes,
-                        "Finding airports...",
+                        t("Buscando aeropuertos…"),
                     )
                 ).elements,
                 (feature: any) => feature.tags.iata,
@@ -63,7 +64,7 @@ export const findMatchingPlaces = async (question: MatchingQuestion) => {
             return (
                 await findPlacesInZone(
                     '[place=city]["population"~"^[1-9]+[0-9]{6}$"]', // The regex is faster than (if:number(t["population"])>1000000)
-                    "Finding cities...",
+                    t("Buscando ciudades…"),
                 )
             ).elements.map((x: any) =>
                 turf.point([
@@ -90,7 +91,9 @@ export const findMatchingPlaces = async (question: MatchingQuestion) => {
 
             const data = await findPlacesInZone(
                 `[${LOCATION_FIRST_TAG[location]}=${location}]`,
-                `Finding ${prettifyLocation(location, true).toLowerCase()}...`,
+                t("Buscando: {what}…", {
+                    what: prettifyLocation(location, true).toLowerCase(),
+                }),
                 "nwr",
                 "center",
                 [],
@@ -99,20 +102,31 @@ export const findMatchingPlaces = async (question: MatchingQuestion) => {
 
             if (data.remark && data.remark.startsWith("runtime error")) {
                 toast.error(
-                    `Error finding ${prettifyLocation(
-                        location,
-                        true,
-                    ).toLowerCase()}. Please enable hiding zone mode and switch to the Large Game variation of this question.`,
+                    t(
+                        "Error al buscar: {what}. Activa el modo zonas de escondite y usa la versión de partida grande de esta pregunta.",
+                        {
+                            what: prettifyLocation(
+                                location,
+                                true,
+                            ).toLowerCase(),
+                        },
+                    ),
                 );
                 return [];
             }
 
             if (data.elements.length >= 1000) {
                 toast.error(
-                    `Too many ${prettifyLocation(
-                        location,
-                        true,
-                    ).toLowerCase()} found (${data.elements.length}). Please enable hiding zone mode and switch to the Large Game variation of this question.`,
+                    t(
+                        "Hay demasiados ({n}): {what}. Activa el modo zonas de escondite y usa la versión de partida grande de esta pregunta.",
+                        {
+                            n: data.elements.length,
+                            what: prettifyLocation(
+                                location,
+                                true,
+                            ).toLowerCase(),
+                        },
+                    ),
                 );
                 return [];
             }
@@ -170,7 +184,9 @@ export const determineMatchingBoundary = _.memoize(
                 );
 
                 if (!boundary) {
-                    toast.error("No boundary found for this zone");
+                    toast.error(
+                        t("No se ha encontrado el límite de esta zona"),
+                    );
                     throw new Error("No boundary found");
                 }
                 break;
@@ -183,7 +199,9 @@ export const determineMatchingBoundary = _.memoize(
                 );
 
                 if (!zone) {
-                    toast.error("No boundary found for this zone");
+                    toast.error(
+                        t("No se ha encontrado el límite de esta zona"),
+                    );
                     throw new Error("No boundary found");
                 }
 
@@ -195,7 +213,7 @@ export const determineMatchingBoundary = _.memoize(
                     if (/^[a-zA-Z]$/.test(name[0])) {
                         englishName = name;
                     } else {
-                        toast.error("No English name found for this zone");
+                        toast.error(t("Esta zona no tiene nombre"));
                         throw new Error("No English name");
                     }
                 }

@@ -45,10 +45,10 @@ export default defineConfig({
                 ],
             },
             manifest: {
-                name: "Jet Lag Hide and Seek Map Generator",
-                short_name: "Map Generator",
+                name: "Hide+Seek Madrid",
+                short_name: "Hide+Seek",
                 description:
-                    "Automatically generate maps for Jet Lag The Game: Hide and Seek with ease! Simply name the questions and watch the map eliminate hundreds of possibilities in seconds.",
+                    "Mapa para jugar al escondite de Jet Lag en la Comunidad de Madrid.",
                 icons: [
                     {
                         src: "/Hide-Seek-Madrid/JLIcon.png",

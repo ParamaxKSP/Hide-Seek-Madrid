@@ -13,6 +13,7 @@ import { useEffect, useRef, useState } from "react";
 import { FeatureGroup, Marker, Polygon, Polyline } from "react-leaflet";
 import { EditControl } from "react-leaflet-draw";
 
+import { t } from "@/i18n";
 import {
     autoSave,
     drawingQuestionKey,
@@ -236,6 +237,54 @@ const MeasuringPointMarker = ({
     );
 };
 
+// Textos de las herramientas de dibujo de Leaflet.
+const translateLeafletDraw = () => {
+    const d = L.drawLocal;
+    d.draw.toolbar.actions = {
+        title: t("Cancelar el dibujo"),
+        text: t("Cancelar"),
+    };
+    d.draw.toolbar.finish = {
+        title: t("Terminar el dibujo"),
+        text: t("Terminar"),
+    };
+    d.draw.toolbar.undo = {
+        title: t("Borrar el último punto"),
+        text: t("Deshacer punto"),
+    };
+    d.draw.toolbar.buttons.marker = t("Añadir un punto");
+    d.draw.handlers.polygon.tooltip = {
+        start: t("Pulsa para empezar a dibujar."),
+        cont: t("Pulsa para seguir dibujando."),
+        end: t("Pulsa el primer punto para cerrar la forma."),
+    };
+    d.draw.handlers.polyline.error = t(
+        "<strong>Error:</strong> los bordes no se pueden cruzar.",
+    );
+    d.draw.handlers.marker.tooltip = {
+        start: t("Pulsa en el mapa para poner el punto."),
+    };
+    d.edit.toolbar.actions = {
+        save: { title: t("Guardar los cambios"), text: t("Guardar") },
+        cancel: { title: t("Descartar los cambios"), text: t("Cancelar") },
+        clearAll: { title: t("Borrar todo"), text: t("Borrar todo") },
+    };
+    d.edit.toolbar.buttons = {
+        edit: t("Editar"),
+        editDisabled: t("No hay nada que editar"),
+        remove: t("Borrar"),
+        removeDisabled: t("No hay nada que borrar"),
+    };
+    d.edit.handlers.edit.tooltip = {
+        text: t("Arrastra los puntos para cambiar la forma."),
+        subtext: t("Pulsa cancelar para deshacer los cambios."),
+    };
+    d.edit.handlers.remove.tooltip = {
+        text: t("Pulsa una forma para borrarla."),
+    };
+};
+translateLeafletDraw();
+
 export const PolygonDraw = () => {
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $questions = useStore(questions);
@@ -245,7 +294,7 @@ export const PolygonDraw = () => {
     let question: Question | undefined;
 
     if ($drawingQuestionKey === -1) {
-        L.drawLocal.draw.toolbar.buttons.polygon = "Draw the hiding zone!";
+        L.drawLocal.draw.toolbar.buttons.polygon = t("Dibuja la zona de juego");
     } else {
         question = $questions.find((q) => q.key === $drawingQuestionKey);
 
@@ -253,12 +302,14 @@ export const PolygonDraw = () => {
             drawingQuestionKey.set(-1);
         }
         if (question?.id === "matching") {
-            L.drawLocal.draw.toolbar.buttons.polygon =
-                "Draw the matching zone(s)!";
+            L.drawLocal.draw.toolbar.buttons.polygon = t(
+                "Dibuja las zonas de la pregunta",
+            );
         }
         if (question?.id === "measuring") {
-            L.drawLocal.draw.toolbar.buttons.polygon =
-                "Draw the measuring zone(s)!";
+            L.drawLocal.draw.toolbar.buttons.polygon = t(
+                "Dibuja las zonas de la pregunta",
+            );
         }
     }
 

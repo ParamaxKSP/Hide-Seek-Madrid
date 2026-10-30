@@ -17,6 +17,7 @@ import {
     SidebarMenu,
     SidebarMenuItem,
 } from "@/components/ui/sidebar-r";
+import { t } from "@/i18n";
 import {
     ALL_STATIONS,
     animateMapMovements,
@@ -87,7 +88,7 @@ import { MENU_ITEM_CLASSNAME } from "./ui/sidebar-l";
 import { UnitSelect } from "./UnitSelect";
 
 function _previewText(count: number) {
-    return `${count} custom station${count === 1 ? "" : "s"} imported`;
+    return t("Estaciones propias importadas: {n}", { n: count });
 }
 
 let buttonJustClicked = false;
@@ -320,7 +321,9 @@ export const ZoneSidebar = () => {
                         // Custom-only lists don't have reliable OSM IDs
                         if (useCustomStations && !includeDefaultStations) {
                             toast.warning(
-                                "'Same train line' isn't supported with custom-only station lists; skipping this filter.",
+                                t(
+                                    "«Misma línea de tren» no funciona solo con estaciones propias; se omite este filtro.",
+                                ),
                             );
                         } else {
                             const nid = nearestTrainStation.properties.id as
@@ -328,7 +331,9 @@ export const ZoneSidebar = () => {
                                 | undefined;
                             if (!nid || !nid.includes("/")) {
                                 toast.warning(
-                                    "Nearest station has no OSM id; skipping 'same train line' filter.",
+                                    t(
+                                        "La estación más cercana no tiene id de OSM; se omite «misma línea de tren».",
+                                    ),
                                 );
                                 continue;
                             }
@@ -341,9 +346,15 @@ export const ZoneSidebar = () => {
 
                             if (nodes.length === 0) {
                                 toast.warning(
-                                    `No train line found for ${extractStationName(
-                                        nearestTrainStation,
-                                    )}`,
+                                    t(
+                                        "No se ha encontrado la línea de {station}",
+                                        {
+                                            station:
+                                                extractStationName(
+                                                    nearestTrainStation,
+                                                ) ?? "",
+                                        },
+                                    ),
                                 );
                                 continue;
                             } else {
@@ -365,7 +376,7 @@ export const ZoneSidebar = () => {
                     const englishName = extractStationName(nearestTrainStation);
 
                     if (!englishName)
-                        return toast.error("No English name found");
+                        return toast.error(t("La estación no tiene nombre"));
 
                     if (question.data.type === "same-first-letter-station") {
                         // Sin tildes: «Ávila» y «Alcalá» empiezan por la misma letra.
@@ -455,10 +466,9 @@ export const ZoneSidebar = () => {
         if ($displayHidingZones && $questionFinishedMapData) {
             initializeHidingZones().catch((error) => {
                 console.log("Error in hiding zone initialization:", error);
-                toast.error(
-                    "An error occurred during hiding zone initialization",
-                    { toastId: "hiding-zone-initialization-error" },
-                );
+                toast.error(t("Error al preparar las zonas de escondite"), {
+                    toastId: "hiding-zone-initialization-error",
+                });
             });
         }
     }, [
@@ -491,13 +501,12 @@ export const ZoneSidebar = () => {
                     $hidingRadius,
                 ).catch((error) => {
                     console.log("Error in hiding zone selection:", error);
-                    toast.error(
-                        "An error occurred during hiding zone selection",
-                        { toastId: "hiding-zone-selection-error" },
-                    );
+                    toast.error(t("Error al elegir la zona de escondite"), {
+                        toastId: "hiding-zone-selection-error",
+                    });
                 });
             } else {
-                toast.error("Invalid hiding zone selected", {
+                toast.error(t("Zona de escondite no válida"), {
                     toastId: "hiding-zone-selection-error",
                 });
             }
@@ -531,7 +540,9 @@ export const ZoneSidebar = () => {
     return (
         <Sidebar side="right">
             <div className="flex items-center justify-between">
-                <h2 className="ml-4 mt-4 font-poppins text-2xl">Hiding Zone</h2>
+                <h2 className="ml-4 mt-4 font-poppins text-2xl">
+                    {t("Zonas de escondite")}
+                </h2>
                 <SidebarCloseIcon
                     className="mr-2 visible md:hidden scale-x-[-1]"
                     onClick={() => {
@@ -546,7 +557,7 @@ export const ZoneSidebar = () => {
                         <SidebarMenu>
                             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                                 <Label className="font-semibold font-poppins">
-                                    Display hiding zones?
+                                    {t("¿Mostrar las zonas de escondite?")}
                                 </Label>
                                 <Checkbox
                                     defaultChecked={$displayHidingZones}
@@ -561,13 +572,16 @@ export const ZoneSidebar = () => {
                                     "text-orange-500",
                                 )}
                             >
-                                Warning: This feature can drastically slow down
-                                your device.
+                                {t(
+                                    "Aviso: puede hacer que el móvil vaya mucho más lento.",
+                                )}
                             </SidebarMenuItem>
                             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                                 <div className="flex flex-row items-center justify-between w-full">
                                     <Label className="font-semibold font-poppins">
-                                        Use custom station list?
+                                        {t(
+                                            "¿Usar una lista de estaciones propia?",
+                                        )}
                                     </Label>
                                     <Checkbox
                                         checked={useCustomStations}
@@ -581,7 +595,7 @@ export const ZoneSidebar = () => {
                             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                                 <div className="flex flex-row items-center justify-between w-full">
                                     <Label className="font-semibold font-poppins">
-                                        Merge duplicated stations?
+                                        {t("¿Juntar estaciones duplicadas?")}
                                     </Label>
                                     <Checkbox
                                         checked={mergeDuplicates}
@@ -599,9 +613,9 @@ export const ZoneSidebar = () => {
                                     >
                                         <div className="flex flex-col gap-2 w-full">
                                             <Label className="font-semibold font-poppins leading-5">
-                                                Import stations from URL (CSV,
-                                                GeoJSON, KML). This must be a
-                                                raw file link.
+                                                {t(
+                                                    "Importar estaciones desde un enlace (CSV, GeoJSON, KML). Tiene que ser el enlace directo al archivo.",
+                                                )}
                                             </Label>
                                             <div className="flex gap-2">
                                                 <Input
@@ -641,7 +655,9 @@ export const ZoneSidebar = () => {
                                                                 0
                                                             ) {
                                                                 toast.error(
-                                                                    "No stations found in provided URL",
+                                                                    t(
+                                                                        "No hay estaciones en ese enlace",
+                                                                    ),
                                                                 );
                                                                 return;
                                                             }
@@ -649,16 +665,30 @@ export const ZoneSidebar = () => {
                                                                 parsed,
                                                             );
                                                             toast.success(
-                                                                `Imported ${parsed.length} stations`,
+                                                                t(
+                                                                    "Estaciones importadas: {n}",
+                                                                    {
+                                                                        n: parsed.length,
+                                                                    },
+                                                                ),
                                                             );
                                                         } catch (e: any) {
                                                             toast.error(
-                                                                `Failed to import from URL: ${e.message || e}`,
+                                                                t(
+                                                                    "No se ha podido importar: {error}",
+                                                                    {
+                                                                        error:
+                                                                            e.message ||
+                                                                            String(
+                                                                                e,
+                                                                            ),
+                                                                    },
+                                                                ),
                                                             );
                                                         }
                                                     }}
                                                 >
-                                                    Import
+                                                    {t("Importar")}
                                                 </button>
                                             </div>
                                             <div>
@@ -696,7 +726,9 @@ export const ZoneSidebar = () => {
                                                                 all.length === 0
                                                             ) {
                                                                 toast.error(
-                                                                    "No stations found in uploaded files",
+                                                                    t(
+                                                                        "No hay estaciones en los archivos",
+                                                                    ),
                                                                 );
                                                                 return;
                                                             }
@@ -731,11 +763,25 @@ export const ZoneSidebar = () => {
                                                                 unique,
                                                             );
                                                             toast.success(
-                                                                `Imported ${unique.length} stations`,
+                                                                t(
+                                                                    "Estaciones importadas: {n}",
+                                                                    {
+                                                                        n: unique.length,
+                                                                    },
+                                                                ),
                                                             );
                                                         } catch (e: any) {
                                                             toast.error(
-                                                                `Failed to import files: ${e.message || e}`,
+                                                                t(
+                                                                    "No se han podido importar los archivos: {error}",
+                                                                    {
+                                                                        error:
+                                                                            e.message ||
+                                                                            String(
+                                                                                e,
+                                                                            ),
+                                                                    },
+                                                                ),
                                                             );
                                                         }
                                                     }}
@@ -743,8 +789,9 @@ export const ZoneSidebar = () => {
                                             </div>
                                             <div className="flex flex-row items-center justify-between w-full">
                                                 <Label className="font-semibold font-poppins">
-                                                    Include default stations
-                                                    with custom list?
+                                                    {t(
+                                                        "¿Incluir también las estaciones de siempre?",
+                                                    )}
                                                 </Label>
                                                 <Checkbox
                                                     checked={
@@ -775,7 +822,9 @@ export const ZoneSidebar = () => {
                                                             )
                                                         }
                                                     >
-                                                        Clear Imported
+                                                        {t(
+                                                            "Quitar las importadas",
+                                                        )}
                                                     </Button>
                                                 </div>
                                             )}
@@ -791,7 +840,9 @@ export const ZoneSidebar = () => {
                                         // Sin ningún tipo no habría zonas: se vuelve a «Todas».
                                         if (values.length === 0) {
                                             toast.info(
-                                                "Tiene que haber al menos un tipo de estación: se usan todas.",
+                                                t(
+                                                    "Tiene que haber al menos un tipo de estación: se usan todas.",
+                                                ),
                                                 { toastId: "station-types" },
                                             );
                                             displayHidingZonesOptions.set([
@@ -805,7 +856,7 @@ export const ZoneSidebar = () => {
                                         }
                                     }}
                                     defaultValue={$displayHidingZonesOptions}
-                                    placeholder="Tipos de estación"
+                                    placeholder={t("Tipos de estación")}
                                     animation={2}
                                     maxCount={3}
                                     modalPopover
@@ -819,7 +870,7 @@ export const ZoneSidebar = () => {
                             </SidebarMenuItem>
                             <SidebarMenuItem>
                                 <Label className="font-semibold font-poppins ml-2">
-                                    Hiding Zone Radius
+                                    {t("Radio de la zona de escondite")}
                                 </Label>
                                 <div
                                     className={cn(
@@ -854,7 +905,7 @@ export const ZoneSidebar = () => {
                                     }}
                                     disabled={$isLoading}
                                 >
-                                    No Display
+                                    {t("No mostrar")}
                                 </SidebarMenuItem>
                             )}
                             {$displayHidingZones && stations.length > 0 && (
@@ -866,7 +917,7 @@ export const ZoneSidebar = () => {
                                     }}
                                     disabled={$isLoading}
                                 >
-                                    All Stations
+                                    {t("Todas las estaciones")}
                                 </SidebarMenuItem>
                             )}
                             {$displayHidingZones && stations.length > 0 && (
@@ -878,7 +929,7 @@ export const ZoneSidebar = () => {
                                     }}
                                     disabled={$isLoading}
                                 >
-                                    All Zones
+                                    {t("Todas las zonas")}
                                 </SidebarMenuItem>
                             )}
                             {$displayHidingZones && stations.length > 0 && (
@@ -892,7 +943,7 @@ export const ZoneSidebar = () => {
                                     }}
                                     disabled={$isLoading}
                                 >
-                                    No Overlap
+                                    {t("Sin solapes")}
                                 </SidebarMenuItem>
                             )}
                             {$displayHidingZones && hidingZoneModeStationID && (
@@ -903,7 +954,7 @@ export const ZoneSidebar = () => {
                                     )}
                                     disabled={$isLoading}
                                 >
-                                    Current:{" "}
+                                    {t("Actual:")}{" "}
                                     {(() => {
                                         const selected = stations.find(
                                             (x) =>
@@ -946,7 +997,7 @@ export const ZoneSidebar = () => {
                                         }}
                                         disabled={$isLoading}
                                     >
-                                        Clear Disabled
+                                        {t("Reactivar las desactivadas")}
                                     </SidebarMenuItem>
                                 )}
                             {$displayHidingZones && (
@@ -962,7 +1013,7 @@ export const ZoneSidebar = () => {
                                     }}
                                     disabled={$isLoading}
                                 >
-                                    Disable All
+                                    {t("Desactivar todas")}
                                 </SidebarMenuItem>
                             )}
                             {$displayHidingZones && (
@@ -975,14 +1026,18 @@ export const ZoneSidebar = () => {
                                     shouldFilter={isStationSearchActive}
                                 >
                                     <CommandInput
-                                        placeholder="Search for a hiding zone..."
+                                        placeholder={t(
+                                            "Buscar una zona de escondite…",
+                                        )}
                                         value={stationSearch}
                                         onValueChange={setStationSearch}
                                         disabled={$isLoading}
                                     />
                                     <CommandList className="max-h-full">
                                         <CommandEmpty>
-                                            No hiding zones found.
+                                            {t(
+                                                "No se ha encontrado ninguna zona.",
+                                            )}
                                         </CommandEmpty>
                                         <CommandGroup>
                                             {stations.map((station) => (
@@ -1171,7 +1226,7 @@ async function selectionProcess(
                         unit: "miles",
                         locationType: question.data.type,
                     },
-                    "Finding matching locations to hiding zone...",
+                    t("Buscando lugares para la zona de escondite…"),
                 );
 
                 const distances: any[] = await Promise.all(
@@ -1372,7 +1427,9 @@ async function selectionProcess(
 
     if (_.isEqual(mapData, BLANK_GEOJSON)) {
         toast.warning(
-            "The hider cannot be in this hiding zone. This wasn't eliminated on the sidebar as its absence was caused by multiple criteria.",
+            t(
+                "El escondido no puede estar en esta zona. No se ha eliminado en la barra porque lo descartan varias preguntas a la vez.",
+            ),
         );
     }
 

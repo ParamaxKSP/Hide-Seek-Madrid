@@ -12,6 +12,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { SidebarMenuButton } from "@/components/ui/sidebar-l";
+import { t } from "@/i18n";
 import {
     addQuestion,
     defaultCustomQuestions,
@@ -145,7 +146,7 @@ export const AddQuestionDialog = ({
 
     const runPasteQuestion = async () => {
         if (!navigator || !navigator.clipboard) {
-            toast.error("Clipboard API not supported in your browser");
+            toast.error(t("Tu navegador no permite usar el portapapeles."));
             return false;
         }
 
@@ -163,9 +164,11 @@ export const AddQuestionDialog = ({
                     return addQuestion(question);
                 }),
                 {
-                    pending: "Reading from clipboard",
-                    success: "Question added from clipboard!",
-                    error: "No valid question found in clipboard",
+                    pending: t("Leyendo el portapapeles…"),
+                    success: t("Pregunta añadida desde el portapapeles"),
+                    error: t(
+                        "No hay ninguna pregunta válida en el portapapeles",
+                    ),
                 },
                 { autoClose: 1000 },
             );
@@ -180,9 +183,9 @@ export const AddQuestionDialog = ({
         <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>{children}</DialogTrigger>
             <DialogContent>
-                <DialogTitle>Add Question</DialogTitle>
+                <DialogTitle>{t("Añadir pregunta")}</DialogTitle>
                 <DialogDescription>
-                    Select which question type you would like to add.
+                    {t("Elige qué tipo de pregunta quieres añadir.")}
                 </DialogDescription>
 
                 <label className="flex items-center gap-2 text-sm">
@@ -192,7 +195,7 @@ export const AddQuestionDialog = ({
                             newQuestionsAtGps.set(checked === true)
                         }
                     />
-                    Crear la pregunta en mi ubicación (GPS)
+                    {t("Crear la pregunta en mi ubicación (GPS)")}
                 </label>
 
                 <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -203,7 +206,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Add Radius
+                        {t("Radar")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -212,7 +215,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Add Thermometer
+                        {t("Termómetro")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -221,7 +224,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Add Tentacles
+                        {t("Tentáculos")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -230,7 +233,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Add Matching
+                        {t("Coincidencia")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -239,7 +242,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Add Measuring
+                        {t("Medición")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -248,7 +251,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Añadir foto
+                        {t("Foto")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -257,7 +260,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Otra pregunta sin mapa
+                        {t("Otra pregunta sin mapa")}
                     </SidebarMenuButton>
                     <SidebarMenuButton
                         onClick={async () => {
@@ -266,7 +269,7 @@ export const AddQuestionDialog = ({
                         }}
                         disabled={$isLoading}
                     >
-                        Paste Question
+                        {t("Pegar pregunta")}
                     </SidebarMenuButton>
                 </div>
             </DialogContent>

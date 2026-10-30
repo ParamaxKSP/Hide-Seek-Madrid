@@ -11,6 +11,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
+import { t } from "@/i18n";
 import {
     autoSave,
     isLoading,
@@ -89,7 +90,9 @@ export const QuestionSidebar = () => {
     return (
         <Sidebar>
             <div className="flex items-center justify-between">
-                <h2 className="ml-4 mt-4 font-poppins text-2xl">Questions</h2>
+                <h2 className="ml-4 mt-4 font-poppins text-2xl">
+                    {t("Preguntas")}
+                </h2>
                 <SidebarCloseIcon
                     className="mr-2 visible md:hidden"
                     onClick={() => {
@@ -113,7 +116,7 @@ export const QuestionSidebar = () => {
                         <SidebarMenuItem>
                             <AddQuestionDialog>
                                 <SidebarMenuButton disabled={$isLoading}>
-                                    Add Question
+                                    {t("Añadir pregunta")}
                                 </SidebarMenuButton>
                             </AddQuestionDialog>
                         </SidebarMenuItem>
@@ -124,7 +127,7 @@ export const QuestionSidebar = () => {
                                 rel="noopener noreferrer"
                             >
                                 <SidebarMenuButton className="bg-emerald-600 transition-colors">
-                                    Star this on GitHub! It&apos;s free :)
+                                    {t("Proyecto original (GitHub)")}
                                 </SidebarMenuButton>
                             </a>
                         </SidebarMenuItem>

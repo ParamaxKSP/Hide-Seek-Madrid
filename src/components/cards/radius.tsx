@@ -26,6 +26,8 @@ const RADAR_OPTIONS = Object.fromEntries(
     CATALOG.filter((e) => e.category === "radius").map((e) => [e.id, e.label]),
 );
 
+import { t } from "@/i18n";
+
 import { QuestionCard } from "./base";
 
 export const RadiusQuestionComponent = ({
@@ -43,7 +45,7 @@ export const RadiusQuestionComponent = ({
     const $hiderMode = useStore(hiderMode);
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
-    const label = `Radius
+    const label = `${t("Radar")}
     ${
         $questions
             .filter((q) => q.id === "radius")
@@ -68,7 +70,7 @@ export const RadiusQuestionComponent = ({
         >
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Pregunta de radar"
+                    trigger={t("Pregunta de radar")}
                     options={RADAR_OPTIONS}
                     value={catalogIdOf({
                         id: "radius",
@@ -124,7 +126,7 @@ export const RadiusQuestionComponent = ({
                         $isLoading && "text-muted-foreground",
                     )}
                 >
-                    Result
+                    {t("Resultado")}
                 </Label>
                 <ToggleGroup
                     className="grow"
@@ -135,8 +137,12 @@ export const RadiusQuestionComponent = ({
                     }
                     disabled={!!$hiderMode || !data.drag || $isLoading}
                 >
-                    <ToggleGroupItem value="outside">Outside</ToggleGroupItem>
-                    <ToggleGroupItem value="inside">Inside</ToggleGroupItem>
+                    <ToggleGroupItem value="outside">
+                        {t("Fuera")}
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="inside">
+                        {t("Dentro")}
+                    </ToggleGroupItem>
                 </ToggleGroup>
             </div>
         </QuestionCard>

@@ -12,6 +12,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
 import { UnitSelect } from "@/components/UnitSelect";
+import { t } from "@/i18n";
 import {
     drawingQuestionKey,
     hiderMode,
@@ -48,7 +49,7 @@ export const TentacleQuestionComponent = ({
     const $questions = useStore(questions);
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $isLoading = useStore(isLoading);
-    const label = `Tentacles
+    const label = `${t("Tentáculos")}
     ${
         $questions
             .filter((q) => q.id === "tentacles")
@@ -69,7 +70,7 @@ export const TentacleQuestionComponent = ({
             locked={!data.drag}
             setLocked={(locked) => questionModified((data.drag = !locked))}
             hidden={data.hidden}
-            setHidden={(hidden) => questionModified((data.hidden = !hidden))}
+            setHidden={(hidden) => questionModified((data.hidden = hidden))}
         >
             <SidebarMenuItem>
                 <div className={cn(MENU_ITEM_CLASSNAME, "gap-2 flex flex-row")}>
@@ -91,7 +92,7 @@ export const TentacleQuestionComponent = ({
             </SidebarMenuItem>
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Location Type"
+                    trigger={t("Tipo de lugar")}
                     options={Object.fromEntries(
                         tentacleQuestionSchema.options
                             .filter((x) => x.description === NO_GROUP)
@@ -152,7 +153,7 @@ export const TentacleQuestionComponent = ({
             {data.locationType === "custom" && data.drag && (
                 <>
                     <p className="px-2 mb-1 text-center text-orange-500">
-                        To modify tentacle locations, enable it:
+                        {t("Para cambiar los lugares, actívalo:")}
                         <Checkbox
                             className="mx-1 my-1"
                             checked={$drawingQuestionKey === questionKey}
@@ -165,7 +166,9 @@ export const TentacleQuestionComponent = ({
                             }}
                             disabled={!data.drag || $isLoading}
                         />
-                        and use the buttons at the bottom left of the map.
+                        {t(
+                            "y usa los botones de abajo a la izquierda del mapa.",
+                        )}
                     </p>
                     <div className="flex justify-center mb-2">
                         <PresetsDialog
@@ -308,9 +311,9 @@ const TentacleLocationSelector = ({
 
     return (
         <Select
-            trigger="Location"
+            trigger={t("Lugar")}
             options={{
-                false: "Not Within",
+                false: t("Ninguno dentro"),
                 ...mapToObj(filteredFeatures, (feature: any) => [
                     feature.properties.name,
                     feature.properties.name,

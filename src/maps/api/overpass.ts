@@ -4,6 +4,7 @@ import _ from "lodash";
 import osmtogeojson from "osmtogeojson";
 import { toast } from "react-toastify";
 
+import { t } from "@/i18n";
 import {
     additionalMapGeoLocations,
     mapGeoLocation,
@@ -73,7 +74,9 @@ export const getOverpassData = async (
                 }
             } catch {
                 toast.error(
-                    `Could not load data from Overpass: ${response.status} ${response.statusText}`,
+                    t("No se han podido cargar datos de Overpass: {status}", {
+                        status: `${response.status} ${response.statusText}`,
+                    }),
                     { toastId: "overpass-error" },
                 );
                 return { elements: [] };
@@ -83,7 +86,9 @@ export const getOverpassData = async (
 
     if (!response.ok) {
         toast.error(
-            `Could not load data from Overpass: ${response.status} ${response.statusText}`,
+            t("No se han podido cargar datos de Overpass: {status}", {
+                status: `${response.status} ${response.statusText}`,
+            }),
             { toastId: "overpass-error" },
         );
         return { elements: [] };
@@ -109,7 +114,7 @@ export const determineGeoJSON = async (
     const query = `[out:json];${osmType}(${osmId});out geom;`;
     const data = await getOverpassData(
         query,
-        "Loading map data...",
+        t("Cargando el mapa…"),
         CacheType.PERMANENT_CACHE,
     );
     const geo = osmtogeojson(data);
@@ -123,7 +128,7 @@ export const determineGeoJSON = async (
 
 export const findTentacleLocations = async (
     question: TentacleLocationQuery,
-    text: string = "Determining tentacle locations...",
+    text: string = t("Buscando los lugares de los tentáculos…"),
 ) => {
     const madrid = madridCategoryOf(question.locationType);
     const localFilter = madrid
@@ -192,7 +197,7 @@ is_in(${latitude}, ${longitude})->.a;
 rel(pivot.a)["admin_level"="${adminLevel}"];
 out geom;
     `;
-    const data = await getOverpassData(query, "Determining matching zone...");
+    const data = await getOverpassData(query, t("Buscando la zona…"));
     const geo = osmtogeojson(data);
     return geo.features?.[0];
 };
@@ -200,7 +205,7 @@ out geom;
 export const fetchCoastline = async () => {
     const response = await cacheFetch(
         import.meta.env.BASE_URL + "/coastline50.geojson",
-        "Fetching coastline data...",
+        t("Cargando la costa…"),
         CacheType.PERMANENT_CACHE,
     );
     const data = await response.json();
@@ -222,7 +227,10 @@ node(${nodeId});
 wr(bn);
 out tags;
 `;
-    const tagData = await getOverpassData(tagQuery, "Finding train line...");
+    const tagData = await getOverpassData(
+        tagQuery,
+        t("Buscando la línea de tren…"),
+    );
     const query = `
 [out:json];
 (
@@ -246,7 +254,10 @@ ${tagData.elements
 );
 out geom;
 `;
-    const data = await getOverpassData(query, "Finding train lines...");
+    const data = await getOverpassData(
+        query,
+        t("Buscando las líneas de tren…"),
+    );
     const geoJSON = osmtogeojson(data);
     const nodes: number[] = [];
     geoJSON.features.forEach((feature: any) => {
@@ -416,7 +427,7 @@ export const nearestToQuestion = async (
     let instances: any = { features: [] };
     while (instances.features.length === 0) {
         if (radius > 600) {
-            toast.error("No hay ningún lugar de este tipo en el mapa.");
+            toast.error(t("No hay ningún lugar de este tipo en el mapa."));
             throw new Error("No locations of this type");
         }
         instances = await findTentacleLocations(
@@ -427,7 +438,7 @@ export const nearestToQuestion = async (
                 unit: "miles",
                 locationType: question.type,
             },
-            "Finding matching locations...",
+            t("Buscando lugares…"),
         );
         radius += 30;
     }

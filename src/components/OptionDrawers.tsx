@@ -9,6 +9,7 @@ import {
     DrawerTitle,
     DrawerTrigger,
 } from "@/components/ui/drawer";
+import { t } from "@/i18n";
 import {
     additionalMapGeoLocations,
     allowGooglePlusCodes,
@@ -126,7 +127,11 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                 loadHidingZone(atob(hidingZoneOld));
                 clean();
             } catch (e) {
-                toast.error(`Enlace de partida no válido: ${e}`);
+                toast.error(
+                    t("Enlace de partida no válido: {error}", {
+                        error: String(e),
+                    }),
+                );
             }
         } else if (hidingZoneCompressed) {
             decompress(hidingZoneCompressed)
@@ -134,7 +139,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     loadHidingZone(data);
                     clean();
                 })
-                .catch(() => toast.error("El enlace de partida está roto."));
+                .catch(() => toast.error(t("El enlace de partida está roto.")));
         }
     }, []);
 
@@ -187,7 +192,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                         "function"
                                         ? (crypto as any).randomUUID()
                                         : String(Date.now()) + Math.random()),
-                                name: p.name ?? "Imported preset",
+                                name: p.name ?? t("Plantilla importada"),
                                 type: p.type ?? "custom",
                                 data: p.data,
                                 createdAt:
@@ -196,7 +201,11 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                         });
                     if (normalized.length > 0) {
                         customPresets.set(normalized);
-                        toast.info(`Imported ${normalized.length} preset(s)`);
+                        toast.info(
+                            t("Plantillas importadas: {n}", {
+                                n: normalized.length,
+                            }),
+                        );
                     }
                 } catch (err) {
                     console.warn("Failed to import presets", err);
@@ -239,11 +248,11 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                 permanentOverlay.set(null);
             }
 
-            toast.success("Hiding zone loaded successfully", {
+            toast.success(t("Partida cargada"), {
                 autoClose: 2000,
             });
         } catch (e) {
-            toast.error(`Invalid hiding zone settings: ${e}`);
+            toast.error(t("Partida no válida: {error}", { error: String(e) }));
         }
     };
 
@@ -263,12 +272,16 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
             a.click();
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
-            toast.success("Partida guardada en un archivo", {
+            toast.success(t("Partida guardada en un archivo"), {
                 autoClose: 2000,
             });
         } catch (e) {
             console.error("Failed to save file:", e);
-            toast.error(`Failed to save file: ${e}`);
+            toast.error(
+                t("No se ha podido guardar el archivo: {error}", {
+                    error: String(e),
+                }),
+            );
         }
     };
 
@@ -279,11 +292,11 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
             if (typeof result === "string") {
                 loadHidingZone(result);
             } else {
-                toast.error("Failed to read file");
+                toast.error(t("No se ha podido leer el archivo"));
             }
         };
         reader.onerror = () => {
-            toast.error("Failed to read file");
+            toast.error(t("No se ha podido leer el archivo"));
         };
         reader.readAsText(file);
     };
@@ -311,16 +324,16 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
             <Button
                 className="shadow-md"
                 onClick={saveToFile}
-                title="Download current hiding zone as a JSON file"
+                title={t("Descargar la partida en un archivo")}
             >
-                Save File
+                {t("Guardar")}
             </Button>
             <Button
                 className="shadow-md"
                 onClick={() => fileInputRef.current?.click()}
-                title="Load a hiding zone from a JSON file"
+                title={t("Abrir una partida desde un archivo")}
             >
-                Load File
+                {t("Abrir")}
             </Button>
             <Button
                 className="shadow-md"
@@ -332,7 +345,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                         );
                     } catch (error) {
                         console.error("Compression failed:", error);
-                        toast.error("No se pudo preparar la partida.");
+                        toast.error(t("No se pudo preparar la partida."));
                         return;
                     }
 
@@ -341,7 +354,9 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
 
                     if (shareUrl.length > MAX_LINK_LENGTH) {
                         toast.info(
-                            "La partida es demasiado grande para un enlace: se descarga como archivo para que lo mandes.",
+                            t(
+                                "La partida es demasiado grande para un enlace: se descarga como archivo para que lo mandes.",
+                            ),
                         );
                         saveToFile();
                         return;
@@ -350,19 +365,24 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     // Menú de compartir del móvil o, si no hay, portapapeles.
                     const result = await shareOrFallback(shareUrl);
                     if (result === false) {
-                        toast.error(`No se pudo copiar. Enlace: ${shareUrl}`, {
-                            className: "p-0 w-[1000px]",
-                        });
+                        toast.error(
+                            t("No se pudo copiar. Enlace: {url}", {
+                                url: shareUrl,
+                            }),
+                            {
+                                className: "p-0 w-[1000px]",
+                            },
+                        );
                     } else if (result === "clipboard") {
-                        toast.success("Enlace de la partida copiado", {
+                        toast.success(t("Enlace de la partida copiado"), {
                             autoClose: 2000,
                         });
                     }
                 }}
-                title="Compartir la partida (zona y preguntas) por enlace"
+                title={t("Compartir la partida (zona y preguntas) por enlace")}
                 data-tutorial-id="share-questions-button"
             >
-                Share
+                {t("Compartir")}
             </Button>
             <Button
                 className="w-24 shadow-md"
@@ -370,7 +390,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     showTutorial.set(true);
                 }}
             >
-                Tutorial
+                {t("Tutorial")}
             </Button>
             <Drawer open={isOptionsOpen} onOpenChange={setOptionsOpen}>
                 <DrawerTrigger className="w-24" asChild>
@@ -378,14 +398,14 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                         className="w-24 shadow-md"
                         data-tutorial-id="option-questions-button"
                     >
-                        Options
+                        {t("Opciones")}
                     </Button>
                 </DrawerTrigger>
                 <DrawerContent>
                     <div className="flex flex-col items-center gap-4 mb-4">
                         <DrawerHeader>
                             <DrawerTitle className="text-4xl font-semibold font-poppins">
-                                Options
+                                {t("Opciones")}
                             </DrawerTitle>
                         </DrawerHeader>
                         <div className="overflow-y-scroll max-h-[40vh] flex flex-col items-center gap-4 max-w-[1000px] px-12">
@@ -394,49 +414,52 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                     onClick={() => {
                                         if (!navigator || !navigator.clipboard)
                                             return toast.error(
-                                                "Clipboard not supported",
+                                                t(
+                                                    "Tu navegador no permite usar el portapapeles.",
+                                                ),
                                             );
                                         navigator.clipboard.writeText(
                                             JSON.stringify($hidingZone),
                                         );
-                                        toast.success(
-                                            "Hiding zone copied successfully",
-                                            {
-                                                autoClose: 2000,
-                                            },
-                                        );
+                                        toast.success(t("Partida copiada"), {
+                                            autoClose: 2000,
+                                        });
                                     }}
                                 >
-                                    Copy Hiding Zone
+                                    {t("Copiar partida")}
                                 </Button>
                                 <Button
                                     onClick={() => {
                                         if (!navigator || !navigator.clipboard)
                                             return toast.error(
-                                                "Clipboard not supported",
+                                                t(
+                                                    "Tu navegador no permite usar el portapapeles.",
+                                                ),
                                             );
                                         navigator.clipboard
                                             .readText()
                                             .then(loadHidingZone);
                                     }}
                                 >
-                                    Paste Hiding Zone
+                                    {t("Pegar partida")}
                                 </Button>
                             </div>
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <Label>Default Unit</Label>
+                            <Label>{t("Unidad por defecto")}</Label>
                             <UnitSelect
                                 unit={$defaultUnit}
                                 onChange={defaultUnit.set}
                             />
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <Label>New Custom Question Defaults</Label>
+                            <Label>
+                                {t("Nuevas preguntas personalizadas")}
+                            </Label>
                             <Select
-                                trigger="New custom default"
+                                trigger={t("Al crear una nueva")}
                                 options={{
-                                    ask: "Ask each time",
-                                    blank: "Start blank",
-                                    prefill: "Copy from current",
+                                    ask: t("Preguntar cada vez"),
+                                    blank: t("Empezar vacía"),
+                                    prefill: t("Copiar la actual"),
                                 }}
                                 value={$customInitPref}
                                 onValueChange={(v) =>
@@ -444,9 +467,9 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                 }
                             />
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <Label>Base map style</Label>
+                            <Label>{t("Estilo del mapa")}</Label>
                             <Select
-                                trigger="Base map style"
+                                trigger={t("Estilo del mapa")}
                                 options={{
                                     voyager: "CARTO Voyager",
                                     light: "CARTO Light",
@@ -462,7 +485,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                 }
                             />
                             <div className="flex flex-col items-center gap-2">
-                                <Label>Thunderforest API Key</Label>
+                                <Label>{t("Clave de Thunderforest")}</Label>
                                 <Input
                                     type="text"
                                     value={$thunderforestApiKey}
@@ -470,33 +493,36 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                     onChange={(e) =>
                                         thunderforestApiKey.set(e.target.value)
                                     }
-                                    placeholder="Enter your Thunderforest API key"
+                                    placeholder={t(
+                                        "Escribe tu clave de Thunderforest",
+                                    )}
                                 />
                                 <p className="text-xs text-gray-500">
-                                    Needed for Thunderforest map styles. Create
-                                    a key{" "}
+                                    {t(
+                                        "Hace falta para los estilos de Thunderforest. Crea una clave",
+                                    )}{" "}
                                     <a
                                         href="https://manage.thunderforest.com/users/sign_up?price=hobby-project-usd"
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="text-blue-500 cursor-pointer"
                                     >
-                                        here.
-                                    </a>{" "}
-                                    Don&apos;t worry, it&apos;s free.
+                                        {t("aquí")}
+                                    </a>
+                                    {t(". Es gratis.")}
                                 </p>
                             </div>
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <Label>Overpass API Host</Label>
+                            <Label>{t("Servidor de Overpass")}</Label>
                             <Select
-                                trigger="Overpass API host"
+                                trigger={t("Servidor de Overpass")}
                                 options={{
                                     ...Object.fromEntries(
                                         Object.entries(OVERPASS_HOSTS).map(
                                             ([label, url]) => [url, label],
                                         ),
                                     ),
-                                    custom: "Custom URL",
+                                    custom: t("Otra dirección"),
                                 }}
                                 value={$overpassHost}
                                 onValueChange={(v) =>
@@ -519,22 +545,26 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             )}
                             <p className="text-xs text-gray-500 text-center">
                                 {$overpassHost === "custom"
-                                    ? "The other hosts will be used as fallbacks if this one fails."
-                                    : "The remaining hosts will be tried as fallbacks if the selected one fails."}
+                                    ? t("Si este falla, se probarán los demás.")
+                                    : t(
+                                          "Si el elegido falla, se probarán los demás.",
+                                      )}
                             </p>
                             <Separator className="bg-slate-300 w-[280px]" />
-                            <Label>Permanent Map Overlay</Label>
+                            <Label>{t("Capa fija en el mapa")}</Label>
                             <div className="flex flex-row max-[330px]:flex-col gap-4">
                                 <Button
                                     onClick={() => permanentOverlay.set(null)}
                                 >
-                                    Remove
+                                    {t("Quitar")}
                                 </Button>
                                 <Button
                                     onClick={async () => {
                                         if (!navigator || !navigator.clipboard)
                                             return toast.error(
-                                                "Clipboard not supported",
+                                                t(
+                                                    "Tu navegador no permite usar el portapapeles.",
+                                                ),
                                             );
 
                                         try {
@@ -545,18 +575,21 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                             permanentOverlay.set(geojson);
                                         } catch (e) {
                                             toast.error(
-                                                `Invalid GeoJSON overlay: ${e}`,
+                                                t(
+                                                    "GeoJSON no válido: {error}",
+                                                    { error: String(e) },
+                                                ),
                                             );
                                         }
                                     }}
                                 >
-                                    Paste GeoJSON
+                                    {t("Pegar GeoJSON")}
                                 </Button>
                             </div>
                             <Separator className="bg-slate-300 w-[280px]" />
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Animate map movements?
+                                    {t("¿Animar los movimientos del mapa?")}
                                 </label>
                                 <Checkbox
                                     checked={$animateMapMovements}
@@ -569,7 +602,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Enable planning mode?
+                                    {t("¿Modo planificación?")}
                                 </label>
                                 <Checkbox
                                     checked={$planningMode}
@@ -597,7 +630,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Auto save?
+                                    {t("¿Guardar automáticamente?")}
                                 </label>
                                 <Checkbox
                                     checked={$autoSave}
@@ -608,7 +641,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Auto zoom?
+                                    {t("¿Zoom automático?")}
                                 </label>
                                 <Checkbox
                                     checked={$autoZoom}
@@ -619,7 +652,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Follow Me (GPS)?
+                                    {t("¿Seguir mi posición (GPS)?")}
                                 </label>
                                 <Checkbox
                                     checked={$followMe}
@@ -630,7 +663,9 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Default to custom questions?
+                                    {t(
+                                        "¿Preguntas personalizadas por defecto?",
+                                    )}
                                 </label>
                                 <Checkbox
                                     checked={$defaultCustomQuestions}
@@ -643,7 +678,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Allow Google Plus codes?
+                                    {t("¿Permitir Plus Codes de Google?")}
                                 </label>
                                 <Checkbox
                                     checked={$allowGooglePlusCodes}
@@ -656,7 +691,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                             </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
-                                    Hider mode?
+                                    {t("¿Modo escondido?")}
                                 </label>
                                 <Checkbox
                                     checked={!!$hiderMode}
@@ -707,7 +742,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                                 );
                                             }
                                         }}
-                                        label="Hider Location"
+                                        label={t("Posición del escondido")}
                                     />
                                     {!autoSave && (
                                         <SidebarMenuItem>
@@ -715,7 +750,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                                 className="bg-blue-600 p-2 rounded-md font-semibold font-poppins transition-shadow duration-500 mt-2"
                                                 onClick={save}
                                             >
-                                                Save
+                                                {t("Guardar")}
                                             </SidebarMenuButton>
                                         </SidebarMenuItem>
                                     )}

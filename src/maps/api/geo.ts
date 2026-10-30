@@ -1,5 +1,7 @@
 import type { LatLngTuple } from "leaflet";
 
+import { t } from "@/i18n";
+
 import type { APILocations, OpenStreetMap } from "./types";
 
 export const convertToLongLat = (coordinates: LatLngTuple): number[] => {
@@ -10,43 +12,26 @@ export const convertToLatLong = (coordinates: number[]): LatLngTuple => {
     return [coordinates[1], coordinates[0]];
 };
 
+const LOCATION_NAMES: Partial<Record<APILocations, [string, string]>> = {
+    aquarium: ["Acuario", "Acuarios"],
+    hospital: ["Hospital", "Hospitales"],
+    peak: ["Montaña", "Montañas"],
+    museum: ["Museo", "Museos"],
+    theme_park: ["Parque de atracciones", "Parques de atracciones"],
+    zoo: ["Zoo", "Zoos"],
+    cinema: ["Cine", "Cines"],
+    library: ["Biblioteca", "Bibliotecas"],
+    golf_course: ["Campo de golf", "Campos de golf"],
+    consulate: ["Consulado", "Consulados"],
+    park: ["Parque", "Parques"],
+};
+
 export const prettifyLocation = (
     location: APILocations,
     plural: boolean = false,
 ): string => {
-    if (plural) {
-        switch (location) {
-            case "library":
-                return "Libraries";
-            default:
-                return prettifyLocation(location) + "s";
-        }
-    }
-
-    switch (location) {
-        case "aquarium":
-            return "Aquarium";
-        case "hospital":
-            return "Hospital";
-        case "peak":
-            return "Mountain";
-        case "museum":
-            return "Museum";
-        case "theme_park":
-            return "Theme Park";
-        case "zoo":
-            return "Zoo";
-        case "cinema":
-            return "Cinema";
-        case "library":
-            return "Library";
-        case "golf_course":
-            return "Golf Course";
-        case "consulate":
-            return "Foreign Consulate";
-        case "park":
-            return "Park";
-    }
+    const names = LOCATION_NAMES[location];
+    return names ? t(names[plural ? 1 : 0]) : String(location);
 };
 
 export const determineName = (feature: OpenStreetMap) => {

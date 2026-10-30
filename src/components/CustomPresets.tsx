@@ -3,6 +3,7 @@ import * as React from "react";
 import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
+import { t } from "@/i18n";
 import {
     type CustomPreset,
     customPresets,
@@ -30,7 +31,7 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
     );
 
     const handleSave = async () => {
-        const name = window.prompt("Name for this preset", "");
+        const name = window.prompt(t("Nombre de la plantilla"), "");
         if (!name) return;
         const toSave = {
             name,
@@ -38,7 +39,7 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
             data: safeClone(data),
         };
         const p = saveCustomPreset(toSave);
-        toast.success(`Saved preset "${p.name}"`);
+        toast.success(t("Plantilla guardada: {name}", { name: p.name }));
     };
 
     const handleLoad = (preset: CustomPreset) => {
@@ -49,20 +50,23 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
         });
         // ensure nested objects replaced where appropriate (geo etc)
         questionModified();
-        toast.info(`Loaded preset "${preset.name}"`);
+        toast.info(t("Plantilla cargada: {name}", { name: preset.name }));
     };
 
     const handleEdit = (preset: CustomPreset) => {
-        const newName = window.prompt("New preset name", preset.name);
+        const newName = window.prompt(
+            t("Nuevo nombre de la plantilla"),
+            preset.name,
+        );
         if (!newName || newName === preset.name) return;
         updateCustomPreset(preset.id, { name: newName });
-        toast.success(`Renamed preset to "${newName}"`);
+        toast.success(t("Plantilla renombrada: {name}", { name: newName }));
     };
 
     const handleDelete = (preset: CustomPreset) => {
         if (!window.confirm(`Delete preset "${preset.name}"?`)) return;
         deleteCustomPreset(preset.id);
-        toast.info(`Deleted preset "${preset.name}"`);
+        toast.info(t("Plantilla borrada: {name}", { name: preset.name }));
     };
 
     const handleShare = async (preset: CustomPreset) => {
@@ -73,9 +77,9 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
         };
         try {
             await navigator.clipboard.writeText(JSON.stringify(payload));
-            toast.success("Preset JSON copied to clipboard");
+            toast.success(t("Plantilla copiada al portapapeles"));
         } catch {
-            toast.error("Could not copy to clipboard");
+            toast.error(t("No se ha podido copiar al portapapeles"));
         }
     };
 
@@ -83,12 +87,12 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
         try {
             const text = await navigator.clipboard.readText();
             if (!text) {
-                toast.error("Clipboard is empty");
+                toast.error(t("El portapapeles está vacío"));
                 return;
             }
             const payload = JSON.parse(text);
             if (!payload.data) {
-                toast.error("Clipboard JSON is not a preset (missing data)");
+                toast.error(t("Lo del portapapeles no es una plantilla"));
                 return;
             }
             const src = safeClone(payload.data);
@@ -96,24 +100,30 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
                 (data as any)[k] = src[k];
             });
             questionModified();
-            toast.info(`Applied preset "${payload.name ?? "from clipboard"}"`);
+            toast.info(
+                t("Plantilla aplicada: {name}", {
+                    name: payload.name ?? t("del portapapeles"),
+                }),
+            );
         } catch {
-            toast.error("Could not read or parse clipboard JSON");
+            toast.error(t("No se ha podido leer el portapapeles"));
         }
     };
 
     return (
         <div className="p-2">
             <div className="flex flex-col sm:flex-row gap-2 [&>*]:w-[50%]">
-                <Button onClick={handleSave}>Save as preset</Button>
+                <Button onClick={handleSave}>
+                    {t("Guardar como plantilla")}
+                </Button>
                 <Button variant="ghost" onClick={handleApplyFromClipboard}>
-                    Apply from clipboard
+                    {t("Aplicar desde el portapapeles")}
                 </Button>
             </div>
 
             {presets.length === 0 ? (
                 <div className="mt-2 text-sm text-muted-foreground">
-                    No presets saved.
+                    {t("No hay plantillas guardadas.")}
                 </div>
             ) : (
                 <div className="mt-3 space-y-2 max-h-56 overflow-y-auto">
@@ -130,28 +140,28 @@ const CustomPresets: React.FC<Props> = ({ data, presetTypeHint }) => {
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                                 <Button size="sm" onClick={() => handleLoad(p)}>
-                                    Load
+                                    {t("Cargar")}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => handleEdit(p)}
                                 >
-                                    Edit
+                                    {t("Renombrar")}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="ghost"
                                     onClick={() => handleShare(p)}
                                 >
-                                    Share
+                                    {t("Compartir")}
                                 </Button>
                                 <Button
                                     size="sm"
                                     variant="destructive"
                                     onClick={() => handleDelete(p)}
                                 >
-                                    Delete
+                                    {t("Borrar")}
                                 </Button>
                             </div>
                         </div>

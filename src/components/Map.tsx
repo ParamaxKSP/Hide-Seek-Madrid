@@ -9,6 +9,7 @@ import { useEffect, useMemo } from "react";
 import { MapContainer, ScaleControl, TileLayer } from "react-leaflet";
 import { toast } from "react-toastify";
 
+import { t } from "@/i18n";
 import { roundHistory } from "@/lib/clock";
 import {
     additionalMapGeoLocations,
@@ -170,7 +171,7 @@ export const Map = ({ className }: { className?: string }) => {
                         })
                         .catch((error) => console.log(error)),
                     {
-                        error: "Error refreshing map data",
+                        error: t("Error al actualizar el mapa"),
                     },
                 );
             }
@@ -240,7 +241,9 @@ export const Map = ({ className }: { className?: string }) => {
 
             isLoading.set(false);
             if (document.querySelectorAll(".Toastify__toast").length === 0) {
-                return toast.error("No solutions found / error occurred");
+                return toast.error(
+                    t("No queda ninguna zona posible (o ha habido un error)"),
+                );
             }
         } finally {
             isLoading.set(false);
@@ -259,7 +262,7 @@ export const Map = ({ className }: { className?: string }) => {
                 contextmenuWidth={140}
                 contextmenuItems={[
                     {
-                        text: "Add Radius",
+                        text: t("Añadir radar"),
                         callback: (e: any) =>
                             addQuestion({
                                 id: "radius",
@@ -270,7 +273,7 @@ export const Map = ({ className }: { className?: string }) => {
                             }),
                     },
                     {
-                        text: "Add Thermometer",
+                        text: t("Añadir termómetro"),
                         callback: (e: any) => {
                             const destination = turf.destination(
                                 [e.latlng.lng, e.latlng.lat],
@@ -293,7 +296,7 @@ export const Map = ({ className }: { className?: string }) => {
                         },
                     },
                     {
-                        text: "Add Tentacles",
+                        text: t("Añadir tentáculos"),
                         callback: (e: any) => {
                             addQuestion({
                                 id: "tentacles",
@@ -305,7 +308,7 @@ export const Map = ({ className }: { className?: string }) => {
                         },
                     },
                     {
-                        text: "Add Matching",
+                        text: t("Añadir coincidencia"),
                         callback: (e: any) => {
                             addQuestion({
                                 id: "matching",
@@ -317,7 +320,7 @@ export const Map = ({ className }: { className?: string }) => {
                         },
                     },
                     {
-                        text: "Add Measuring",
+                        text: t("Añadir medición"),
                         callback: (e: any) => {
                             addQuestion({
                                 id: "measuring",
@@ -329,7 +332,7 @@ export const Map = ({ className }: { className?: string }) => {
                         },
                     },
                     {
-                        text: "Exclude Country",
+                        text: t("Excluir país"),
                         callback: (e: any) => {
                             addQuestion({
                                 id: "matching",
@@ -346,11 +349,13 @@ export const Map = ({ className }: { className?: string }) => {
                         },
                     },
                     {
-                        text: "Copy Coordinates",
+                        text: t("Copiar coordenadas"),
                         callback: (e: any) => {
                             if (!navigator || !navigator.clipboard) {
                                 toast.error(
-                                    "Clipboard API not supported in your browser",
+                                    t(
+                                        "Tu navegador no permite usar el portapapeles.",
+                                    ),
                                 );
                                 return;
                             }
@@ -365,9 +370,9 @@ export const Map = ({ className }: { className?: string }) => {
                                     )}°${longitude > 0 ? "E" : "W"}`,
                                 ),
                                 {
-                                    pending: "Writing to clipboard...",
-                                    success: "Coordinates copied!",
-                                    error: "An error occurred while copying",
+                                    pending: t("Copiando…"),
+                                    success: t("Coordenadas copiadas"),
+                                    error: t("No se ha podido copiar"),
                                 },
                                 { autoClose: 1000 },
                             );
@@ -383,7 +388,7 @@ export const Map = ({ className }: { className?: string }) => {
                     </div>
                 </div>
                 <PolygonDraw />
-                <ScaleControl position="bottomleft" />
+                <ScaleControl position="bottomleft" imperial={false} />
                 <MapPrint
                     position="topright"
                     sizeModes={["Current", "A4Portrait", "A4Landscape"]}
@@ -394,7 +399,7 @@ export const Map = ({ className }: { className?: string }) => {
                         "leaflet-control-easyPrint",
                         "leaflet-draw",
                     ]}
-                    title="Print"
+                    title={t("Imprimir")}
                 />
             </MapContainer>
         ),
@@ -483,7 +488,7 @@ export const Map = ({ className }: { className?: string }) => {
                 }
             },
             () => {
-                toast.error("Unable to access your location.");
+                toast.error(t("No se puede acceder a tu ubicación."));
                 followMe.set(false);
             },
             { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 },

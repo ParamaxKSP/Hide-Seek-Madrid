@@ -12,6 +12,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
+import { t } from "@/i18n";
 import { customInitPreference } from "@/lib/context";
 
 type Props = {
@@ -45,10 +46,13 @@ export const CustomInitDialog: React.FC<Props> = ({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>New Custom Question</DialogTitle>
+                    <DialogTitle>
+                        {t("Nueva pregunta personalizada")}
+                    </DialogTitle>
                     <DialogDescription>
-                        Do you want the new question to start blank, or copy
-                        what the current question contains?
+                        {t(
+                            "¿Quieres que la nueva pregunta empiece vacía o que copie lo que tiene la actual?",
+                        )}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex items-center gap-2">
@@ -58,14 +62,16 @@ export const CustomInitDialog: React.FC<Props> = ({
                         onCheckedChange={(c) => setRemember(Boolean(c))}
                     />
                     <label htmlFor={checkboxId} className="text-sm">
-                        Remember my choice
+                        {t("Recordar mi elección")}
                     </label>
                 </div>
                 <DialogFooter>
                     <Button variant="secondary" onClick={handleBlank}>
-                        Start blank
+                        {t("Empezar vacía")}
                     </Button>
-                    <Button onClick={handlePrefill}>Copy from current</Button>
+                    <Button onClick={handlePrefill}>
+                        {t("Copiar la actual")}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

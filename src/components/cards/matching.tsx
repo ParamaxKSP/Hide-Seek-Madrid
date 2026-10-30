@@ -13,6 +13,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { t } from "@/i18n";
 import {
     customInitPreference,
     displayHidingZones,
@@ -61,7 +62,7 @@ export const MatchingQuestionComponent = ({
     const [pendingCustomType, setPendingCustomType] = React.useState<
         "custom-zone" | "custom-points" | null
     >(null);
-    const label = `Matching
+    const label = `${t("Coincidencia")}
     ${
         $questions
             .filter((q) => q.id === "matching")
@@ -78,7 +79,7 @@ export const MatchingQuestionComponent = ({
                 <>
                     <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                         <Select
-                            trigger="División administrativa"
+                            trigger={t("División administrativa")}
                             options={ADMIN_LEVEL_OPTIONS}
                             value={data.cat.adminLevel.toString()}
                             onValueChange={(value) =>
@@ -100,9 +101,9 @@ export const MatchingQuestionComponent = ({
                     </SidebarMenuItem>
                     {data.type === "letter-zone" && (
                         <span className="px-2 text-center text-orange-500">
-                            Warning: The zone data has been simplified by
-                            &plusmn;360 feet (100 meters) in order for the
-                            browser to not crash.
+                            {t(
+                                "Aviso: las zonas se han simplificado unos 100 m para que el navegador no se cuelgue.",
+                            )}
                         </span>
                     )}
                 </>
@@ -134,8 +135,9 @@ export const MatchingQuestionComponent = ({
         case "park":
             questionSpecific = (
                 <span className="px-2 text-center text-orange-500">
-                    This question will only influence the map when you click on
-                    a hiding zone in the hiding zone sidebar.
+                    {t(
+                        "Esta pregunta solo cambia el mapa cuando pulsas una zona en la barra de zonas de escondite.",
+                    )}
                 </span>
             );
             break;
@@ -145,9 +147,9 @@ export const MatchingQuestionComponent = ({
                 questionSpecific = (
                     <>
                         <p className="px-2 mb-1 text-center text-orange-500">
-                            To modify the matching{" "}
-                            {data.type === "custom-zone" ? "zones" : "points"},
-                            enable it:
+                            {data.type === "custom-zone"
+                                ? t("Para cambiar las zonas, actívalo:")
+                                : t("Para cambiar los puntos, actívalo:")}
                             <Checkbox
                                 className="mx-1 my-1"
                                 checked={$drawingQuestionKey === questionKey}
@@ -160,7 +162,9 @@ export const MatchingQuestionComponent = ({
                                 }}
                                 disabled={$isLoading}
                             />
-                            and use the buttons at the bottom left of the map.
+                            {t(
+                                "y usa los botones de abajo a la izquierda del mapa.",
+                            )}
                         </p>
                         <div className="flex justify-center mb-2">
                             <PresetsDialog
@@ -186,7 +190,7 @@ export const MatchingQuestionComponent = ({
             locked={!data.drag}
             setLocked={(locked) => questionModified((data.drag = !locked))}
             hidden={data.hidden}
-            setHidden={(hidden) => questionModified((data.hidden = !hidden))}
+            setHidden={(hidden) => questionModified((data.hidden = hidden))}
         >
             <CustomInitDialog
                 open={customDialogOpen}
@@ -195,10 +199,10 @@ export const MatchingQuestionComponent = ({
                     if (!pendingCustomType) return;
                     if (pendingCustomType === "custom-zone") {
                         (data as any).geo = undefined;
-                        toast.info("Please draw the zone on the map.");
+                        toast.info(t("Dibuja la zona en el mapa."));
                     } else {
                         (data as any).geo = [];
-                        toast.info("Please draw the points on the map.");
+                        toast.info(t("Dibuja los puntos en el mapa."));
                     }
                     data.type = pendingCustomType;
                     questionModified();
@@ -229,7 +233,7 @@ export const MatchingQuestionComponent = ({
                             (data as any).geo = await findMatchingPlaces(data);
                         } else {
                             (data as any).geo = [];
-                            toast.info("Please draw the points on the map.");
+                            toast.info(t("Dibuja los puntos en el mapa."));
                         }
                     }
                     data.type = pendingCustomType;
@@ -239,7 +243,7 @@ export const MatchingQuestionComponent = ({
             />
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Matching Type"
+                    trigger={t("Tipo de pregunta")}
                     options={Object.fromEntries(
                         matchingQuestionSchema.options
                             .filter((x) => x.description === NO_GROUP)
@@ -304,13 +308,11 @@ export const MatchingQuestionComponent = ({
                             if ($customInitPref === "blank") {
                                 if (value === "custom-zone") {
                                     (data as any).geo = undefined;
-                                    toast.info(
-                                        "Please draw the zone on the map.",
-                                    );
+                                    toast.info(t("Dibuja la zona en el mapa."));
                                 } else {
                                     (data as any).geo = [];
                                     toast.info(
-                                        "Please draw the points on the map.",
+                                        t("Dibuja los puntos en el mapa."),
                                     );
                                 }
                             } else if ($customInitPref === "prefill") {
@@ -339,7 +341,7 @@ export const MatchingQuestionComponent = ({
                                     } else {
                                         (data as any).geo = [];
                                         toast.info(
-                                            "Please draw the points on the map.",
+                                            t("Dibuja los puntos en el mapa."),
                                         );
                                     }
                                 }
@@ -398,7 +400,7 @@ export const MatchingQuestionComponent = ({
                         data.type === "same-length-station" && "text-center",
                     )}
                 >
-                    Result
+                    {t("Resultado")}
                 </Label>
                 {data.type === "same-length-station" ? (
                     <ToggleGroup
@@ -432,10 +434,14 @@ export const MatchingQuestionComponent = ({
                         disabled={!!$hiderMode || !data.drag || $isLoading}
                     >
                         <ToggleGroupItem value="shorter">
-                            Shorter
+                            {t("Más corto")}
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="same">Same</ToggleGroupItem>
-                        <ToggleGroupItem value="longer">Longer</ToggleGroupItem>
+                        <ToggleGroupItem value="same">
+                            {t("Igual")}
+                        </ToggleGroupItem>
+                        <ToggleGroupItem value="longer">
+                            {t("Más largo")}
+                        </ToggleGroupItem>
                     </ToggleGroup>
                 ) : (
                     <ToggleGroup
@@ -452,9 +458,11 @@ export const MatchingQuestionComponent = ({
                         disabled={!!$hiderMode || !data.drag || $isLoading}
                     >
                         <ToggleGroupItem value="different">
-                            Different
+                            {t("Diferente")}
                         </ToggleGroupItem>
-                        <ToggleGroupItem value="same">Same</ToggleGroupItem>
+                        <ToggleGroupItem value="same">
+                            {t("Igual")}
+                        </ToggleGroupItem>
                     </ToggleGroup>
                 )}
             </div>

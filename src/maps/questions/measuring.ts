@@ -4,6 +4,7 @@ import _ from "lodash";
 import osmtogeojson from "osmtogeojson";
 import { toast } from "react-toastify";
 
+import { t } from "@/i18n";
 import {
     hiderMode,
     mapGeoJSON,
@@ -140,7 +141,7 @@ export const determineMeasuringBoundary = async (
             const features = osmtogeojson(
                 await findPlacesInZone(
                     "[highspeed=yes]",
-                    "Finding high-speed lines...",
+                    t("Buscando las líneas de alta velocidad…"),
                     "nwr",
                     "geom",
                 ),
@@ -170,7 +171,9 @@ export const determineMeasuringBoundary = async (
             );
 
             if (!zoneInfo) {
-                toast.error("No admin boundary found at this location");
+                toast.error(
+                    t("No hay ninguna división administrativa en este punto"),
+                );
                 return [turf.multiPolygon([])];
             }
 
@@ -230,7 +233,7 @@ export const determineMeasuringBoundary = async (
                             (
                                 await findPlacesInZone(
                                     '["aeroway"="aerodrome"]["iata"]', // Only commercial airports have IATA codes,
-                                    "Finding airports...",
+                                    t("Buscando aeropuertos…"),
                                 )
                             ).elements,
                             (feature: any) => feature.tags.iata,
@@ -250,7 +253,7 @@ export const determineMeasuringBoundary = async (
                         (
                             await findPlacesInZone(
                                 '[place=city]["population"~"^[1-9]+[0-9]{6}$"]', // The regex is faster than (if:number(t["population"])>1000000)
-                                "Finding cities...",
+                                t("Buscando ciudades…"),
                             )
                         ).elements.map((x: any) =>
                             turf.point([
@@ -276,7 +279,9 @@ export const determineMeasuringBoundary = async (
 
             const data = await findPlacesInZone(
                 `[${LOCATION_FIRST_TAG[location]}=${location}]`,
-                `Finding ${prettifyLocation(location, true).toLowerCase()}...`,
+                t("Buscando: {what}…", {
+                    what: prettifyLocation(location, true).toLowerCase(),
+                }),
                 "nwr",
                 "center",
                 [],
@@ -285,20 +290,31 @@ export const determineMeasuringBoundary = async (
 
             if (data.remark && data.remark.startsWith("runtime error")) {
                 toast.error(
-                    `Error finding ${prettifyLocation(
-                        location,
-                        true,
-                    ).toLowerCase()}. Please enable hiding zone mode and switch to the Large Game variation of this question.`,
+                    t(
+                        "Error al buscar: {what}. Activa el modo zonas de escondite y usa la versión de partida grande de esta pregunta.",
+                        {
+                            what: prettifyLocation(
+                                location,
+                                true,
+                            ).toLowerCase(),
+                        },
+                    ),
                 );
                 return [turf.multiPolygon([])];
             }
 
             if (data.elements.length >= 1000) {
                 toast.error(
-                    `Too many ${prettifyLocation(
-                        location,
-                        true,
-                    ).toLowerCase()} found (${data.elements.length}). Please enable hiding zone mode and switch to the Large Game variation of this question.`,
+                    t(
+                        "Hay demasiados ({n}): {what}. Activa el modo zonas de escondite y usa la versión de partida grande de esta pregunta.",
+                        {
+                            n: data.elements.length,
+                            what: prettifyLocation(
+                                location,
+                                true,
+                            ).toLowerCase(),
+                        },
+                    ),
                 );
                 return [turf.multiPolygon([])];
             }

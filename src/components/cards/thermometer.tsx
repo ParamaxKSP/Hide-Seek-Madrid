@@ -10,6 +10,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { t } from "@/i18n";
 import { defaultUnit } from "@/lib/context";
 import {
     hiderMode,
@@ -44,7 +45,7 @@ export const ThermometerQuestionComponent = ({
     const $defaultUnit = useStore(defaultUnit);
     const DISTANCE_UNIT = $defaultUnit ?? "miles";
 
-    const label = `Thermometer
+    const label = `${t("Termómetro")}
     ${
         $questions
             .filter((q) => q.id === "thermometer")
@@ -91,10 +92,10 @@ export const ThermometerQuestionComponent = ({
 
     const unitLabel =
         DISTANCE_UNIT === "meters"
-            ? "Meters"
+            ? t("m")
             : DISTANCE_UNIT === "kilometers"
-              ? "KM"
-              : "Miles";
+              ? t("km")
+              : t("millas");
 
     return (
         <QuestionCard
@@ -114,7 +115,7 @@ export const ThermometerQuestionComponent = ({
             <LatitudeLongitude
                 latitude={data.latA}
                 longitude={data.lngA}
-                label="Start"
+                label={t("Inicio")}
                 colorName={data.colorA}
                 onChange={(lat, lng) => {
                     if (lat !== null) data.latA = lat;
@@ -127,7 +128,7 @@ export const ThermometerQuestionComponent = ({
             <LatitudeLongitude
                 latitude={data.latB}
                 longitude={data.lngB}
-                label="End"
+                label={t("Final")}
                 colorName={data.colorB}
                 onChange={(lat, lng) => {
                     if (lat !== null) data.latB = lat;
@@ -139,12 +140,13 @@ export const ThermometerQuestionComponent = ({
 
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Distancia de la pregunta"
-                    options={{
-                        "1": "Después de viajar 1 km",
-                        "5": "Después de viajar 5 km",
-                        "15": "Después de viajar 15 km",
-                    }}
+                    trigger={t("Distancia de la pregunta")}
+                    options={Object.fromEntries(
+                        ["1", "5", "15", "75"].map((km) => [
+                            km,
+                            t("Después de viajar {km} km", { km }),
+                        ]),
+                    )}
                     value={data.distance ? String(data.distance) : ""}
                     onValueChange={(value) =>
                         questionModified((data.distance = Number(value)))
@@ -168,14 +170,14 @@ export const ThermometerQuestionComponent = ({
                             "text-orange-500",
                     )}
                 >
-                    Distance:{" "}
+                    {t("Distancia:")}{" "}
                     <span className="font-medium text-foreground">
                         {distanceValue.toFixed(3)} {unitLabel}
                     </span>
                     {data.distance &&
                         distanceKm !== null &&
                         distanceKm < data.distance &&
-                        ` · faltan ${(data.distance - distanceKm).toFixed(2)} km en línea recta`}
+                        ` · ${t("faltan {km} km en línea recta", { km: (data.distance - distanceKm).toFixed(2) })}`}
                 </div>
             )}
 
@@ -186,7 +188,7 @@ export const ThermometerQuestionComponent = ({
                         $isLoading && "text-muted-foreground",
                     )}
                 >
-                    Result
+                    {t("Resultado")}
                 </Label>
                 <ToggleGroup
                     className="grow"
@@ -198,9 +200,11 @@ export const ThermometerQuestionComponent = ({
                     disabled={!!$hiderMode || !data.drag || $isLoading}
                 >
                     <ToggleGroupItem color="red" value="colder">
-                        Colder
+                        {t("Más frío")}
                     </ToggleGroupItem>
-                    <ToggleGroupItem value="warmer">Warmer</ToggleGroupItem>
+                    <ToggleGroupItem value="warmer">
+                        {t("Más caliente")}
+                    </ToggleGroupItem>
                 </ToggleGroup>
             </div>
         </QuestionCard>

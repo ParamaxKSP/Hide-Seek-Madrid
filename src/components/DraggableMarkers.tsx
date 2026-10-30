@@ -5,6 +5,7 @@ import { Fragment } from "react/jsx-runtime";
 import { Marker } from "react-leaflet";
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { t } from "@/i18n";
 import {
     autoSave,
     hiderMode,
@@ -102,7 +103,7 @@ const ColoredMarker = ({
                                             longitude ?? $hiderMode.longitude,
                                     });
                                 }}
-                                label="Hider Location"
+                                label={t("Posición del escondido")}
                             />
                         </SidebarMenu>
                     </>

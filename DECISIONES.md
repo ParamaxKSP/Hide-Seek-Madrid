@@ -114,6 +114,13 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - El service worker ahora sí se registra (antes no se cargaba nunca): guarda la app, los datos de Madrid y el módulo de geometría, así que con la web abierta una vez se puede jugar sin cobertura. Las versiones nuevas se instalan solas al volver a abrirla.
 - El fondo del mapa (CARTO/OpenStreetMap) sigue viniendo de fuera; se guardan las teselas ya vistas (hasta 4000, 60 días) para que se vean sin conexión.
 
+## Idioma
+
+- La interfaz está en español. Cada texto pasa por `t()` (`src/i18n/index.ts`) con el texto español como clave: para traducir la app basta con añadir un diccionario `español → idioma`. Lo que falte se ve en español.
+- Nombres de las categorías: Radar, Termómetro, Tentáculos, Coincidencia (matching), Medición (measuring) y Foto. Se cambian en `CATEGORY_INFO` y en las tarjetas.
+- El tutorial se ha reescrito para esta versión (configuración, coste, reloj, zonas, sin cobertura).
+- Pendiente: los textos de las pantallas añadidas en esta versión (reloj, configuración, coste, revisión) ya están en español pero aún no pasan por `t()`.
+
 ## Exclusiones del mapa
 
 - **No** se excluye el aeropuerto: su zona pública es un escondite válido.

@@ -223,6 +223,7 @@ export const GameClock = () => {
     return (
         <>
             <Button
+                data-tutorial-id="clock-button"
                 className={cn(
                     "shadow-md tabular-nums",
                     mounted &&

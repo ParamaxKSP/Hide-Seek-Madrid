@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/popover";
 import { useTutorialStep } from "@/hooks/use-tutorial-step";
 import { useDebounce } from "@/hooks/useDebounce";
+import { t } from "@/i18n";
 import {
     additionalMapGeoLocations,
     isLoading,
@@ -254,7 +255,9 @@ export const PlacePicker = ({
                                                 );
                                             } else {
                                                 return toast.error(
-                                                    "Please add another location in addition mode.",
+                                                    t(
+                                                        "Añade otro sitio antes de quitar este.",
+                                                    ),
                                                     {
                                                         autoClose: 3000,
                                                     },
@@ -284,7 +287,7 @@ export const PlacePicker = ({
                 <Separator className="h-[0.5px]" />
                 <Command shouldFilter={false}>
                     <CommandInput
-                        placeholder="Search place..."
+                        placeholder={t("Buscar un sitio…")}
                         onKeyUp={(x) => {
                             setInputValue(x.currentTarget.value);
                         }}
@@ -292,7 +295,7 @@ export const PlacePicker = ({
                     <CommandList>
                         <CommandEmpty>
                             {loading ? (
-                                <>Loading...</>
+                                <>{t("Cargando…")}</>
                             ) : error ? (
                                 <>
                                     <a
@@ -301,11 +304,12 @@ export const PlacePicker = ({
                                     >
                                         Photon
                                     </a>{" "}
-                                    is down. Please draw a polygon instead at
-                                    the bottom left of the map.
+                                    {t(
+                                        "no funciona. Dibuja un polígono con los botones de abajo a la izquierda del mapa.",
+                                    )}
                                 </>
                             ) : (
-                                "No locations found."
+                                t("No se ha encontrado ningún sitio.")
                             )}
                         </CommandEmpty>
                         <CommandGroup>
@@ -350,7 +354,7 @@ export const PlacePicker = ({
                             clearCache(CacheType.ZONE_CACHE);
                         }}
                     >
-                        Clear Questions & Cache
+                        {t("Borrar preguntas y caché")}
                     </Button>
                     {$polyGeoJSON && (
                         <Button
@@ -362,7 +366,7 @@ export const PlacePicker = ({
                                 questions.set([...questions.get()]);
                             }}
                         >
-                            Reuse Preset Locations
+                            {t("Volver a los sitios guardados")}
                         </Button>
                     )}
                 </Command>

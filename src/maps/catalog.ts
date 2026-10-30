@@ -19,8 +19,8 @@ export interface CategoryInfo {
 }
 
 export const CATEGORY_INFO: Record<QuestionCategory, CategoryInfo> = {
-    matching: { label: "Matching", draw: 3, keep: 1 },
-    measuring: { label: "Measuring", draw: 3, keep: 1 },
+    matching: { label: "Coincidencia", draw: 3, keep: 1 },
+    measuring: { label: "Medición", draw: 3, keep: 1 },
     radius: { label: "Radar", draw: 2, keep: 1 },
     thermometer: { label: "Termómetro", draw: 2, keep: 1 },
     tentacles: { label: "Tentáculos", draw: 4, keep: 2 },
