@@ -146,6 +146,19 @@ export const determineMeasuringBoundary = async (
                 ),
             ).features;
 
+            // Datos de Madrid: las vías ya vienen trazadas; se mide a ellas
+            // directamente (el método original une tramos con saltos rectos).
+            const lines = features.filter(
+                (f) =>
+                    f.geometry?.type === "LineString" ||
+                    f.geometry?.type === "MultiLineString",
+            );
+            if (lines.length > 0)
+                return [
+                    turf.combine(turf.featureCollection(lines as any))
+                        .features[0],
+                ];
+
             return [highSpeedBase(features)];
         }
         case "admin-measure": {

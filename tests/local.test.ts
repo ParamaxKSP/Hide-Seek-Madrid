@@ -323,9 +323,22 @@ describe("datos locales de Madrid", async () => {
         const p = await api.findAdminBoundary(SOL.lat, SOL.lng, 6);
         expect(c?.properties?.name).toMatch(/Madrid/);
         expect(p?.properties?.name).toBe("Madrid");
-        expect((await api.madridCategoryPoints("water")).length).toBe(50);
+        expect((await api.madridCategoryPoints("water")).length).toBe(51);
         const st = await api.madridCategoryPoints("stations");
         expect(st.length).toBeGreaterThan(300);
         expect(st.map((s) => s.properties?.name)).not.toContain("Zarzalejo");
+    });
+
+    it("la pregunta de alta velocidad mide a las vías", async () => {
+        const ctx = await import("@/lib/context");
+        ctx.mapGeoJSON.set(await api.determineMapBoundaries());
+        const m = await import("@/maps/questions/measuring");
+        const r: any = await m.determineMeasuringBoundary({
+            ...SOL,
+            type: "highspeed-measure-shinkansen",
+            hiderCloser: true,
+        } as any);
+        expect(r[0].geometry.type).toBe("MultiLineString");
+        expect(r[0].geometry.coordinates.length).toBeGreaterThan(500);
     });
 });

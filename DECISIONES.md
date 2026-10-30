@@ -143,7 +143,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 | Parques de atracciones | 2 | Parque de Atracciones y Parque Warner |
 | Campos de golf | 25 | ≥ 10 ha; sin pitch & putt ni campos de prácticas |
 | Parques | 215 | Con nombre y ≥ 5 ha |
-| Masas de agua | 51 | Embalses y lagunas de ≥ 2 ha |
+| Masas de agua | 51 | Embalses y lagunas de ≥ 2 ha (distancia al «icono») |
 | Montañas | 342 | ≥ 1.200 m |
 | Ríos | 8 | Manzanares, Jarama, Henares, Guadarrama, Tajo, Tajuña, Lozoya, Alberche |
 | Alta velocidad | — | Vías de alta velocidad dentro de la Comunidad |

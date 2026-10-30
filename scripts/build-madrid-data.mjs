@@ -137,9 +137,10 @@ const cleanName = (n) => {
         : n;
 };
 const add = (cat, extra) => {
-    // Fuera los sitios marcados como cerrados en OpenStreetMap.
+    // Fuera los sitios marcados como cerrados en OpenStreetMap: «cerrado» como
+    // palabra suelta, para no quitar Navacerrada (embalse y cementerio).
     const items = (base[cat] ?? []).filter(
-        (e) => e.p && !/cerrad[oa]/i.test(e.n),
+        (e) => e.p && !/(^|[\s(\-–—,.])cerrad[oa]s?\b/i.test(e.n),
     );
     counts[cat] = items.length;
     for (const e of items)
@@ -176,7 +177,13 @@ for (const r of base.rivers)
             way(g, { waterway: "river", name: r.n, "jlm:cat": "rivers" });
 counts.rivers = base.rivers.length;
 for (const g of base.highspeed[0].lines)
-    if (g.length > 1) way(g, { railway: "rail", highspeed: "yes" });
+    if (g.length > 1)
+        // La pregunta de alta velocidad agrupa los tramos por nombre o red.
+        way(g, {
+            railway: "rail",
+            highspeed: "yes",
+            network: "Alta velocidad",
+        });
 
 // Estaciones (zonas de escondite) a partir de los datos oficiales de líneas
 // (scripts/gtfs_to_transit.py). Solo las que están dentro de la Comunidad.
