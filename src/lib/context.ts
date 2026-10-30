@@ -15,7 +15,6 @@ import {
     type Question,
     type Questions,
     questionSchema,
-    questionsSchema,
     type Units,
 } from "@/maps/schema";
 
@@ -95,9 +94,38 @@ export const polyGeoJSON = persistentAtom<FeatureCollection<
     decode: JSON.parse,
 });
 
+/**
+ * Lee las preguntas guardadas una a una: si alguna está rota (p. ej. un
+ * radio vacío guardado como null) se intenta reparar con el valor por
+ * defecto y, si no se puede, se descarta solo esa, no todas.
+ */
+export const decodeQuestions = (x: string): Questions => {
+    let raw: unknown;
+    try {
+        raw = JSON.parse(x);
+    } catch {
+        return [];
+    }
+    if (!Array.isArray(raw)) return [];
+    return raw.flatMap((item) => {
+        const first = questionSchema.safeParse(item);
+        if (first.success) return [first.data];
+        const data = item?.data;
+        if (data && typeof data === "object") {
+            for (const k of ["radius"])
+                if (!(typeof data[k] === "number" && data[k] > 0))
+                    delete data[k];
+            const second = questionSchema.safeParse(item);
+            if (second.success) return [second.data];
+        }
+        console.warn("Pregunta guardada no válida, descartada:", item);
+        return [];
+    });
+};
+
 export const questions = persistentAtom<Questions>("questions", [], {
     encode: JSON.stringify,
-    decode: (x) => questionsSchema.parse(JSON.parse(x)),
+    decode: decodeQuestions,
 });
 export const addQuestion = (question: DeepPartial<Question>) =>
     questionModified(questions.get().push(questionSchema.parse(question)));

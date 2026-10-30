@@ -65,6 +65,7 @@ import {
     safeUnion,
 } from "@/maps/geo-utils";
 
+import { PositiveNumberInput } from "./PositiveNumberInput";
 import { TransitLinesPanel } from "./TransitLinesPanel";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -861,15 +862,11 @@ export const ZoneSidebar = () => {
                                         "gap-2 flex flex-row",
                                     )}
                                 >
-                                    <Input
-                                        type="number"
-                                        className="rounded-md p-2 w-16"
+                                    <PositiveNumberInput
                                         value={$hidingRadius}
-                                        onChange={(e) => {
-                                            hidingRadius.set(
-                                                parseFloat(e.target.value),
-                                            );
-                                        }}
+                                        onChange={(radius) =>
+                                            hidingRadius.set(radius)
+                                        }
                                         disabled={$isLoading}
                                     />
                                     <UnitSelect

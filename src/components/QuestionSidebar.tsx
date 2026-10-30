@@ -18,6 +18,7 @@ import {
     save,
     triggerLocalRefresh,
 } from "@/lib/context";
+import type { Question } from "@/maps/schema";
 
 import { AddQuestionDialog } from "./AddQuestionDialog";
 import {
@@ -27,6 +28,49 @@ import {
     TentacleQuestionComponent,
     ThermometerQuestionComponent,
 } from "./QuestionCards";
+import { QuestionErrorBoundary } from "./QuestionErrorBoundary";
+
+const renderQuestion = (question: Question) => {
+    switch (question.id) {
+        case "radius":
+            return (
+                <RadiusQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        case "thermometer":
+            return (
+                <ThermometerQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        case "tentacles":
+            return (
+                <TentacleQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        case "matching":
+            return (
+                <MatchingQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        case "measuring":
+            return (
+                <MeasuringQuestionComponent
+                    data={question.data}
+                    questionKey={question.key}
+                />
+            );
+        default:
+            return null;
+    }
+};
 
 export const QuestionSidebar = () => {
     useStore(triggerLocalRefresh);
@@ -46,52 +90,14 @@ export const QuestionSidebar = () => {
                 />
             </div>
             <SidebarContent>
-                {$questions.map((question) => {
-                    switch (question.id) {
-                        case "radius":
-                            return (
-                                <RadiusQuestionComponent
-                                    data={question.data}
-                                    key={question.key}
-                                    questionKey={question.key}
-                                />
-                            );
-                        case "thermometer":
-                            return (
-                                <ThermometerQuestionComponent
-                                    data={question.data}
-                                    key={question.key}
-                                    questionKey={question.key}
-                                />
-                            );
-                        case "tentacles":
-                            return (
-                                <TentacleQuestionComponent
-                                    data={question.data}
-                                    key={question.key}
-                                    questionKey={question.key}
-                                />
-                            );
-                        case "matching":
-                            return (
-                                <MatchingQuestionComponent
-                                    data={question.data}
-                                    key={question.key}
-                                    questionKey={question.key}
-                                />
-                            );
-                        case "measuring":
-                            return (
-                                <MeasuringQuestionComponent
-                                    data={question.data}
-                                    key={question.key}
-                                    questionKey={question.key}
-                                />
-                            );
-                        default:
-                            return null;
-                    }
-                })}
+                {$questions.map((question) => (
+                    <QuestionErrorBoundary
+                        key={question.key}
+                        questionKey={question.key}
+                    >
+                        {renderQuestion(question)}
+                    </QuestionErrorBoundary>
+                ))}
             </SidebarContent>
             <SidebarGroup>
                 <SidebarGroupContent>

@@ -3,9 +3,9 @@ import * as turf from "@turf/turf";
 import { Suspense, use, useEffect, useState } from "react";
 
 import { LatitudeLongitude } from "@/components/LatLngPicker";
+import { PositiveNumberInput } from "@/components/PositiveNumberInput";
 import PresetsDialog from "@/components/PresetsDialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import {
     MENU_ITEM_CLASSNAME,
@@ -73,14 +73,10 @@ export const TentacleQuestionComponent = ({
         >
             <SidebarMenuItem>
                 <div className={cn(MENU_ITEM_CLASSNAME, "gap-2 flex flex-row")}>
-                    <Input
-                        type="number"
-                        className="rounded-md p-2 w-16"
+                    <PositiveNumberInput
                         value={data.radius}
-                        onChange={(e) =>
-                            questionModified(
-                                (data.radius = parseFloat(e.target.value)),
-                            )
+                        onChange={(radius) =>
+                            questionModified((data.radius = radius))
                         }
                         disabled={!data.drag || $isLoading}
                     />

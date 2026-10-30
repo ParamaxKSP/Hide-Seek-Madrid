@@ -1,7 +1,7 @@
 import { useStore } from "@nanostores/react";
 
 import { LatitudeLongitude } from "@/components/LatLngPicker";
-import { Input } from "@/components/ui/input";
+import { PositiveNumberInput } from "@/components/PositiveNumberInput";
 import { Label } from "@/components/ui/label";
 import {
     MENU_ITEM_CLASSNAME,
@@ -61,15 +61,11 @@ export const RadiusQuestionComponent = ({
         >
             <SidebarMenuItem>
                 <div className={cn(MENU_ITEM_CLASSNAME, "gap-2 flex flex-row")}>
-                    <Input
-                        type="number"
-                        className="rounded-md p-2 w-16"
+                    <PositiveNumberInput
                         value={data.radius}
                         disabled={!data.drag || $isLoading}
-                        onChange={(e) =>
-                            questionModified(
-                                (data.radius = parseFloat(e.target.value)),
-                            )
+                        onChange={(radius) =>
+                            questionModified((data.radius = radius))
                         }
                     />
                     <UnitSelect
