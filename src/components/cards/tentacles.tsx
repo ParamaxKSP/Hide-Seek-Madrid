@@ -23,6 +23,7 @@ import {
 import { cn, mapToObj } from "@/lib/utils";
 import { findTentacleLocations } from "@/maps/api";
 import { arcDistance } from "@/maps/geo-utils";
+import { MADRID_TENTACLE_KM, madridCategoryOf } from "@/maps/madrid-categories";
 import {
     determineUnionizedStrings,
     NO_GROUP,
@@ -138,6 +139,13 @@ export const TentacleQuestionComponent = ({
                             data.location = false;
                         } else {
                             data.location = false;
+                            const madrid = madridCategoryOf(value);
+                            const km = madrid && MADRID_TENTACLE_KM[madrid];
+                            if (km && !madridCategoryOf(data.locationType)) {
+                                // Radio por defecto de las categorías de Madrid.
+                                data.radius = km;
+                                data.unit = "kilometers";
+                            }
                             data.locationType = value;
                         }
                         questionModified();

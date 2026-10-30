@@ -3,6 +3,7 @@ import { z } from "zod";
 import { defaultUnit } from "@/lib/context";
 
 import { ICON_COLORS } from "./api/constants";
+import { MADRID_GROUP } from "./madrid-categories";
 
 export const NO_GROUP = "NO_GROUP";
 
@@ -130,6 +131,12 @@ const tentacleLocationsOne = z.union([
     z.literal("library").describe("Libraries"),
 ]);
 
+/** Categorías propias de Madrid con tentáculos (radio por defecto en MADRID_TENTACLE_KM). */
+const tentacleLocationsMadrid = z.union([
+    z.literal("madrid-mercadona").describe("Mercadona"),
+    z.literal("madrid-mcdonalds").describe("McDonald's"),
+]);
+
 const apiLocationSchema = z.union([
     z.literal("golf_course"),
     z.literal("consulate"),
@@ -173,7 +180,7 @@ const tentacleQuestionSpecificSchemaOne = baseTentacleQuestionSchema.extend({
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const encompassingTentacleQuestionSchema = baseTentacleQuestionSchema.extend({
-    locationType: apiLocationSchema,
+    locationType: z.union([apiLocationSchema, tentacleLocationsMadrid]),
     places: z.array(z.any()).optional(),
 });
 
@@ -194,10 +201,16 @@ const customTentacleQuestionSchema = baseTentacleQuestionSchema.extend({
     ),
 });
 
+const tentacleQuestionSpecificSchemaMadrid = baseTentacleQuestionSchema.extend({
+    locationType: tentacleLocationsMadrid,
+    places: z.array(z.any()).optional(),
+});
+
 export const tentacleQuestionSchema = z.union([
     customTentacleQuestionSchema.describe(NO_GROUP),
     tentacleQuestionSpecificSchemaFifteen.describe("15 Miles (Typically)"),
     tentacleQuestionSpecificSchemaOne.describe("1 Mile (Typically)"),
+    tentacleQuestionSpecificSchemaMadrid.describe("Madrid (2 km)"),
 ]);
 
 const baseMatchingQuestionSchema = ordinaryBaseQuestionSchema.extend({
@@ -318,11 +331,29 @@ const customMatchingQuestionSchema = baseMatchingQuestionSchema.extend({
     geo: z.any(),
 });
 
+/** Categorías propias de Madrid (ver madrid-categories.ts). */
+const madridMatchingQuestionSchema = baseMatchingQuestionSchema.extend({
+    type: z.union([
+        z.literal("madrid-mercadona").describe("Mercadona"),
+        z.literal("madrid-mcdonalds").describe("McDonald's"),
+        z.literal("madrid-corteingles").describe("El Corte Inglés"),
+        z.literal("madrid-ikea").describe("IKEA"),
+        z.literal("madrid-stadiums").describe("Estadios y arenas"),
+        z.literal("madrid-bullrings").describe("Plazas de toros"),
+        z.literal("madrid-malls").describe("Centros comerciales"),
+        z.literal("madrid-univ").describe("Universidades"),
+        z.literal("madrid-markets").describe("Mercados municipales"),
+        z.literal("madrid-cemeteries").describe("Cementerios"),
+        z.literal("madrid-castles").describe("Palacios y castillos"),
+    ]),
+});
+
 export const matchingQuestionSchema = z.union([
     zoneMatchingQuestionsSchema.describe(NO_GROUP),
     ordinaryMatchingQuestionSchema.describe(NO_GROUP),
     customMatchingQuestionSchema.describe(NO_GROUP),
     trainLineMatchingQuestionSchema.describe(NO_GROUP),
+    madridMatchingQuestionSchema.describe(MADRID_GROUP),
     hidingZoneMatchingQuestionsSchema.describe("Hiding Zone Mode"),
     homeGameMatchingQuestionsSchema.describe("Hiding Zone Mode"),
 ]);
@@ -425,9 +456,27 @@ const customMeasuringQuestionSchema = baseMeasuringQuestionSchema.extend({
     geo: z.any(),
 });
 
+const madridMeasuringQuestionSchema = baseMeasuringQuestionSchema.extend({
+    type: z.union([
+        z.literal("madrid-mercadona").describe("Mercadona"),
+        z.literal("madrid-mcdonalds").describe("McDonald's"),
+        z.literal("madrid-corteingles").describe("El Corte Inglés"),
+        z.literal("madrid-ikea").describe("IKEA"),
+        z.literal("madrid-stadiums").describe("Estadios y arenas"),
+        z.literal("madrid-bullrings").describe("Plazas de toros"),
+        z.literal("madrid-malls").describe("Centros comerciales"),
+        z.literal("madrid-univ").describe("Universidades"),
+        z.literal("madrid-markets").describe("Mercados municipales"),
+        z.literal("madrid-cemeteries").describe("Cementerios"),
+        z.literal("madrid-castles").describe("Palacios y castillos"),
+        z.literal("madrid-rivers").describe("Ríos"),
+    ]),
+});
+
 export const measuringQuestionSchema = z.union([
     ordinaryMeasuringQuestionSchema.describe(NO_GROUP),
     customMeasuringQuestionSchema.describe(NO_GROUP),
+    madridMeasuringQuestionSchema.describe(MADRID_GROUP),
     hidingZoneMeasuringQuestionsSchema.describe("Hiding Zone Mode"),
     homeGameMeasuringQuestionsSchema.describe("Hiding Zone Mode"),
 ]);
@@ -489,7 +538,8 @@ export type DeepPartial<T> = {
 };
 export type TraditionalTentacleQuestion =
     | z.infer<typeof tentacleQuestionSpecificSchemaFifteen>
-    | z.infer<typeof tentacleQuestionSpecificSchemaOne>;
+    | z.infer<typeof tentacleQuestionSpecificSchemaOne>
+    | z.infer<typeof tentacleQuestionSpecificSchemaMadrid>;
 export type EncompassingTentacleQuestionSchema = z.infer<
     typeof encompassingTentacleQuestionSchema
 >;

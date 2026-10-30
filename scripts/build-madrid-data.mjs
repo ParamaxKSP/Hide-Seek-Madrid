@@ -1,7 +1,8 @@
 // Genera public/data/madrid.json a partir de data-src/.
 // Uso: node scripts/build-madrid-data.mjs
-import * as turf from "@turf/turf";
 import fs from "node:fs";
+
+import * as turf from "@turf/turf";
 import osmtogeojson from "osmtogeojson";
 
 const SRC = new URL("../data-src/", import.meta.url);
@@ -239,6 +240,7 @@ const sameName = (a, b) => {
     return small.every((t) => big.includes(t));
 };
 const MERGE_DISTANCE_M = 450;
+const SAME_PLACE_M = 100;
 const insideStations = transit.stations.filter((s) =>
     turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), comunidadRaw),
 );
@@ -248,11 +250,17 @@ for (let i = 0; i < groups.length; i++)
     for (let j = i + 1; j < groups.length; j++) {
         const a = groups[i].members[0];
         const b = groups[j].members[0];
-        if (a.system === b.system || !sameName(a.name, b.name)) continue;
+        if (a.system === b.system) continue;
         const d = turf.distance([a.lon, a.lat], [b.lon, b.lat], {
             units: "meters",
         });
-        if (d <= MERGE_DISTANCE_M) pairs.push([d, i, j]);
+        // Mismo nombre a menos de 450 m, o pegadas (≤ 100 m) aunque se llamen
+        // distinto: Sierra de Guadalupe + Vallecas, Puerta de Arganda + Vicálvaro.
+        if (
+            d <= SAME_PLACE_M ||
+            (d <= MERGE_DISTANCE_M && sameName(a.name, b.name))
+        )
+            pairs.push([d, i, j]);
     }
 pairs.sort((x, y) => x[0] - y[0]);
 const groupOf = groups.map((g) => g);
@@ -344,6 +352,101 @@ const transitLines = transit.lines
         skipped: skippedPerLine[l.id] ?? [],
         shapes: l.shapes,
     }));
+
+// Nombres repetidos dentro de una categoría (192 «Mercadona», 18 «Plaza de
+// Toros»…): las preguntas identifican los sitios por su nombre, así que se
+// les añade el municipio (o el distrito en Madrid capital) y, si aun así se
+// repiten, la estación más cercana. Si no basta, un número.
+const zoneOf = (lat, lon) => {
+    const p = turf.point([lon, lat]);
+    const d = distritos.find((f) => turf.booleanPointInPolygon(p, f));
+    if (d) return d.properties.name;
+    return municipios.find((f) => turf.booleanPointInPolygon(p, f))?.properties
+        .name;
+};
+const activeStations = elements.filter(
+    (e) => e.tags.railway === "station" && e.tags["jlm:system"],
+);
+const nearestStationName = (lat, lon) => {
+    let best = null;
+    let bestD = Infinity;
+    for (const s of activeStations) {
+        const d = turf.distance([lon, lat], [s.lon, s.lat]);
+        if (d < bestD) [best, bestD] = [s.tags.name, d];
+    }
+    // Una estación lejana no ayuda a ubicar el sitio.
+    return bestD <= 2 ? best : null;
+};
+const _countBy = (xs) =>
+    xs.reduce((acc, x) => ((acc[x] = (acc[x] ?? 0) + 1), acc), {});
+const categoryOf = (e) =>
+    e.tags["jlm:cat"] && e.type === "node" ? e.tags["jlm:cat"] : null;
+const renamed = [];
+const byName = {};
+for (const e of elements) {
+    const cat = categoryOf(e);
+    if (!cat) continue;
+    (byName[`${cat}|${e.tags.name.toLowerCase()}`] ??= []).push(e);
+}
+const duplicates = new Set();
+for (const group of Object.values(byName)) {
+    // El mismo sitio dos veces (mismo nombre a menos de 50 m): se queda uno.
+    for (let i = 0; i < group.length; i++)
+        for (let j = i + 1; j < group.length; j++)
+            if (
+                !duplicates.has(group[j]) &&
+                turf.distance(
+                    [group[i].lon, group[i].lat],
+                    [group[j].lon, group[j].lat],
+                    { units: "meters" },
+                ) < 50
+            )
+                duplicates.add(group[j]);
+    const live = group.filter((e) => !duplicates.has(e));
+    if (live.length < 2) continue;
+    // De norte a sur, para que los números (si hacen falta) se entiendan.
+    live.sort((a, b) => b.lat - a.lat);
+    const base = live[0].tags.name;
+    const steps = [
+        (e) => [zoneOf(e.lat, e.lon)],
+        (e) => {
+            const zone = zoneOf(e.lat, e.lon);
+            const station = nearestStationName(e.lat, e.lon);
+            return [zone, station !== zone ? station : null];
+        },
+    ];
+    let names = live.map(() => base);
+    for (const step of steps) {
+        const counts = _countBy(names);
+        if (Object.values(counts).every((n) => n === 1)) break;
+        names = live.map((e, i) =>
+            counts[names[i]] > 1
+                ? [base, ...step(e).filter(Boolean)].join(" · ")
+                : names[i],
+        );
+    }
+    const left = _countBy(names);
+    const seen = {};
+    names = names.map((n) =>
+        left[n] > 1 ? `${n} ${(seen[n] = (seen[n] ?? 0) + 1)}` : n,
+    );
+    live.forEach((e, i) => {
+        if (names[i] !== e.tags.name) {
+            renamed.push(`${e.tags["jlm:cat"]}: ${names[i]}`);
+            e.tags.name = names[i];
+        }
+    });
+}
+for (let i = elements.length - 1; i >= 0; i--)
+    if (duplicates.has(elements[i])) elements.splice(i, 1);
+counts.duplicadosQuitados = [...duplicates]
+    .map((e) => `${e.tags["jlm:cat"]}: ${e.tags.name}`)
+    .join(", ");
+counts.nombresDistinguidos = renamed.length;
+fs.writeFileSync(
+    new URL("../data-src/nombres_distinguidos.txt", import.meta.url),
+    renamed.sort(natural).join("\n") + "\n",
+);
 
 const out = {
     version: 1,

@@ -24,6 +24,7 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
+import { MADRID_GROUP } from "@/maps/madrid-categories";
 import {
     determineMeasuringBoundary,
     findAdminZoneInfo,
@@ -260,7 +261,9 @@ export const MeasuringQuestionComponent = ({
                         .reduce(
                             (acc, [key, value]) => {
                                 const values = {
-                                    disabled: !$displayHidingZones,
+                                    disabled:
+                                        key !== MADRID_GROUP &&
+                                        !$displayHidingZones,
                                     options: value,
                                 };
 

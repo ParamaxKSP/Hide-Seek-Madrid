@@ -22,6 +22,7 @@ import {
     findAdminBoundary,
     findPlacesInZone,
     LOCATION_FIRST_TAG,
+    madridCategoryPoints,
     nearestToQuestion,
     prettifyLocation,
     sameLineZone,
@@ -30,6 +31,7 @@ import {
 } from "@/maps/api";
 import { holedMask, modifyMapData, safeUnion } from "@/maps/geo-utils";
 import { geoSpatialVoronoi } from "@/maps/geo-utils";
+import { madridCategoryOf } from "@/maps/madrid-categories";
 import type {
     APILocations,
     HomeGameMatchingQuestions,
@@ -37,6 +39,9 @@ import type {
 } from "@/maps/schema";
 
 export const findMatchingPlaces = async (question: MatchingQuestion) => {
+    const madrid = madridCategoryOf(question.type);
+    if (madrid) return madridCategoryPoints(madrid);
+
     switch (question.type) {
         case "airport": {
             return _.uniqBy(
@@ -125,6 +130,17 @@ export const findMatchingPlaces = async (question: MatchingQuestion) => {
 export const determineMatchingBoundary = _.memoize(
     async (question: MatchingQuestion) => {
         let boundary;
+
+        if (madridCategoryOf(question.type)) {
+            // «¿Tu <sitio> más cercano es el mismo que el mío?»: celda de Voronoi.
+            const voronoi = geoSpatialVoronoi(
+                await findMatchingPlaces(question),
+            );
+            const point = turf.point([question.lng, question.lat]);
+            return voronoi.features.find((feature) =>
+                turf.booleanPointInPolygon(point, feature),
+            );
+        }
 
         switch (question.type) {
             case "aquarium":

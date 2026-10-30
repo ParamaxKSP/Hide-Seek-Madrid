@@ -24,6 +24,7 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
+import { MADRID_GROUP } from "@/maps/madrid-categories";
 import {
     determineMatchingBoundary,
     findMatchingPlaces,
@@ -232,7 +233,8 @@ export const MatchingQuestionComponent = ({
                             data.type === "library-full" ||
                             data.type === "golf_course-full" ||
                             data.type === "consulate-full" ||
-                            data.type === "park-full"
+                            data.type === "park-full" ||
+                            data.type.startsWith("madrid-")
                         ) {
                             (data as any).geo = await findMatchingPlaces(data);
                         } else {
@@ -272,7 +274,9 @@ export const MatchingQuestionComponent = ({
                         .reduce(
                             (acc, [key, value]) => {
                                 const values = {
-                                    disabled: !$displayHidingZones,
+                                    disabled:
+                                        key !== MADRID_GROUP &&
+                                        !$displayHidingZones,
                                     options: value,
                                 };
 
@@ -337,7 +341,8 @@ export const MatchingQuestionComponent = ({
                                         data.type === "library-full" ||
                                         data.type === "golf_course-full" ||
                                         data.type === "consulate-full" ||
-                                        data.type === "park-full"
+                                        data.type === "park-full" ||
+                                        data.type.startsWith("madrid-")
                                     ) {
                                         (data as any).geo =
                                             await findMatchingPlaces(data);

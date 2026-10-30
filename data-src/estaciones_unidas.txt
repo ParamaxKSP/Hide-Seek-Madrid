@@ -25,6 +25,7 @@ Pinar de Chamartín + Pinar de Chamartín  →  Pinar de Chamartín
 Pirámides + Pirámides  →  Pirámides
 Pitis + Pitis  →  Pitis
 Príncipe Pío + Madrid-Príncipe Pío  →  Príncipe Pío
+Puerta de Arganda + Vicálvaro  →  Puerta de Arganda
+Sierra de Guadalupe + Vallecas  →  Sierra de Guadalupe
 Sol + Sol  →  Sol
-Villa de Vallecas + Vallecas  →  Villa de Vallecas
 Villaverde Alto + Villaverde Alto  →  Villaverde Alto

@@ -12,6 +12,7 @@ import {
     polyGeoJSON,
 } from "@/lib/context";
 import { safeUnion } from "@/maps/geo-utils";
+import { MADRID_CATEGORIES, madridCategoryOf } from "@/maps/madrid-categories";
 
 import { cacheFetch, determineCache } from "./cache";
 import { LOCATION_FIRST_TAG, OVERPASS_HOSTS } from "./constants";
@@ -124,10 +125,13 @@ export const findTentacleLocations = async (
     question: TentacleLocationQuery,
     text: string = "Determining tentacle locations...",
 ) => {
-    const localFilter = `[${LOCATION_FIRST_TAG[question.locationType]}=${question.locationType}]`;
+    const madrid = madridCategoryOf(question.locationType);
+    const localFilter = madrid
+        ? MADRID_CATEGORIES[madrid].filter
+        : `[${LOCATION_FIRST_TAG[question.locationType as keyof typeof LOCATION_FIRST_TAG]}=${question.locationType}]`;
     const query = `
 [out:json][timeout:25];
-nwr["${LOCATION_FIRST_TAG[question.locationType]}"="${question.locationType}"](around:${turf.convertLength(
+nwr["${LOCATION_FIRST_TAG[question.locationType as keyof typeof LOCATION_FIRST_TAG]}"="${question.locationType}"](around:${turf.convertLength(
         question.radius,
         question.unit,
         "meters",

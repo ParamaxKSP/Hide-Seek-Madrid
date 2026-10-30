@@ -50,10 +50,19 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - **Cercanías:** GTFS oficial de Renfe (núcleo de Madrid).
 - Frecuencias calculadas para el viernes 30/10/2026 entre las 6:00 y las 18:00: una estación queda fuera si en alguna franja horaria no pasa ningún tren de ninguna de sus líneas (Zarzalejo, Robledo de Chavela, Santa María de la Alameda y Puerto de Navacerrada).
 - Las estaciones fuera de la Comunidad (p. ej. Guadalajara) no existen en el mapa.
-- **Estaciones de intercambio (regla de casa):** cuando Metro, Metro Ligero y Cercanías tienen estación en el mismo sitio (a menos de 450 m y con el mismo nombre), se juntan en una sola estación en el punto medio, con una sola zona de escondite. Son 30; la lista está en `data-src/estaciones_unidas.txt`.
+- **Estaciones de intercambio (regla de casa):** cuando Metro, Metro Ligero y Cercanías tienen estación en el mismo sitio (a menos de 450 m y con el mismo nombre), se juntan en una sola estación en el punto medio, con una sola zona de escondite y el nombre de la de Metro. También se juntan las que están pegadas (a 100 m o menos) aunque se llamen distinto: Sierra de Guadalupe + Vallecas y Puerta de Arganda + Vicálvaro (Cercanías). Son 31; la lista está en `data-src/estaciones_unidas.txt`.
 - **¿Misma línea?:** es una pregunta normal (no hace falta activar las zonas de escondite). Si la respuesta es sí, quedan las zonas de escondite de las estaciones de esa línea; si es no, solo se quitan (en azul) las zonas de las estaciones de esa línea y el resto del mapa queda igual; la parte de esas zonas que se solapa con la de otra estación sigue siendo posible. Los buscadores eligen en qué línea van; cuentan todas las estaciones en las que para algún tren de esa línea. La app avisa cuando la línea tiene trenes que pasan sin parar por alguna estación.
 - Se pueden quitar líneas enteras como zonas de escondite: una estación desaparece cuando todas sus líneas están quitadas.
 - Para regenerar: `python3 -I scripts/gtfs_to_transit.py …` y después `node scripts/build-madrid-data.mjs`.
+
+## Preguntas de las categorías propias
+
+- Aparecen en el grupo **Madrid** del desplegable de cada tipo de pregunta y funcionan sin activar las zonas de escondite.
+- **Matching** («¿tu ___ más cercano es el mismo que el mío?»): Mercadona, McDonald's, El Corte Inglés, IKEA, estadios y arenas, plazas de toros, centros comerciales, universidades, mercados municipales, cementerios, palacios y castillos.
+- **Measuring** («¿estás más cerca o más lejos que yo de un ___?»): las mismas y, además, los ríos.
+- **Tentáculos** (2 km por defecto): Mercadona y McDonald's.
+- Para que los sitios con el mismo nombre se distingan (los 192 Mercadona, las 18 «Plaza de Toros»…), se les añade el municipio (o el distrito en Madrid capital) y, si hace falta, la estación más cercana (a 2 km o menos). Si aun así coinciden, un número de norte a sur. Ejemplo: «Mercadona · Centro · Tribunal». La lista está en `data-src/nombres_distinguidos.txt`.
+- Los sitios repetidos (mismo nombre a menos de 50 m) se quitan: el Mercado de Villaverde Alto estaba dos veces.
 
 ## Exclusiones del mapa
 
@@ -80,7 +89,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 | IKEA | 3 | Solo grandes tiendas |
 | Centros comerciales | 35 | Con nombre y ≥ 2 ha, más Xanadú. Pendiente: revisar centros conocidos que el filtro de superficie dejó fuera |
 | Universidades | 22 | Campus de ≥ 5 ha, sin duplicados |
-| Mercados municipales | 50 | Mercados cubiertos «Mercado…» |
+| Mercados municipales | 49 | Mercados cubiertos «Mercado…» |
 | Cementerios | 71 | Con nombre y ≥ 0,5 ha |
 | Palacios y castillos | 44 | Todos los que tienen nombre |
 | Plazas de toros | 53 | Fijas; sin desmontables |

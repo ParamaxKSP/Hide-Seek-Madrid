@@ -4,5 +4,6 @@ export * from "./geo";
 export * from "./geocode";
 export * from "./importers";
 export * from "./local";
+export * from "./madrid-places";
 export * from "./overpass";
 export * from "./types";

@@ -245,4 +245,76 @@ describe("datos locales de Madrid", async () => {
         // Sol también es de L2 y L3: su zona se solapa con otras estaciones y no se quita entera.
         expect(inside(remove, 40.41692, -3.70348)).toBe(false);
     });
+
+    it("une Metro y Cercanías pegados aunque se llamen distinto", async () => {
+        const d = await local.loadMadridData();
+        const names = d.elements
+            .filter((e) => e.tags["jlm:system"])
+            .map((e) => e.tags.name);
+        expect(names).toContain("Sierra de Guadalupe");
+        expect(names).toContain("Villa de Vallecas");
+        expect(names).toContain("Puerta de Arganda");
+        expect(names).not.toContain("Vallecas");
+        const pa = d.elements.find((e) => e.tags.name === "Puerta de Arganda")!;
+        expect(pa.tags["jlm:system"]).toBe("metro;cercanias");
+        const sg = d.elements.find(
+            (e) => e.tags.name === "Sierra de Guadalupe",
+        )!;
+        expect(sg.tags["jlm:system"]).toBe("metro;cercanias");
+        const vv = d.elements.find((e) => e.tags.name === "Villa de Vallecas")!;
+        expect(vv.tags["jlm:system"]).toBe("metro");
+    });
+
+    it("da nombres distintos a los sitios de una misma categoría", async () => {
+        for (const cat of [
+            "mercadona",
+            "mcdonalds",
+            "bullrings",
+            "libraries",
+        ]) {
+            const d = await local.loadMadridData();
+            const names = d.elements
+                .filter((e) => e.tags["jlm:cat"] === cat)
+                .map((e) => e.tags.name);
+            expect(new Set(names).size).toBe(names.length);
+        }
+    });
+
+    it("encuentra los sitios de las categorías de Madrid", async () => {
+        const counts = {
+            mercadona: 193,
+            mcdonalds: 104,
+            corteingles: 12,
+            ikea: 3,
+            stadiums: 14,
+            bullrings: 53,
+            malls: 35,
+            univ: 22,
+            markets: 49,
+            cemeteries: 71,
+            castles: 44,
+        } as const;
+        for (const [cat, n] of Object.entries(counts))
+            expect(
+                (await api.madridCategoryPoints(cat as keyof typeof counts))
+                    .length,
+            ).toBe(n);
+        const rivers = await api.madridCategoryLines("rivers");
+        expect(new Set(rivers.map((r: any) => r.properties.name)).size).toBe(8);
+    });
+
+    it("tentáculos de Mercadona a 2 km con nombres distinguibles", async () => {
+        const near = await api.findTentacleLocations({
+            ...SOL,
+            radius: 2,
+            unit: "kilometers",
+            locationType: "madrid-mercadona",
+        });
+        expect(near.features.length).toBeGreaterThan(5);
+        const names = near.features.map((f: any) => f.properties.name);
+        expect(new Set(names).size).toBe(names.length);
+        expect(names.every((n: string) => n.startsWith("Mercadona"))).toBe(
+            true,
+        );
+    });
 });

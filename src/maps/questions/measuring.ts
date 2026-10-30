@@ -17,6 +17,8 @@ import {
     findPlacesInZone,
     findPlacesSpecificInZone,
     LOCATION_FIRST_TAG,
+    madridCategoryLines,
+    madridCategoryPoints,
     nearestToQuestion,
     prettifyLocation,
     QuestionSpecificLocation,
@@ -29,6 +31,7 @@ import {
     holedMask,
     modifyMapData,
 } from "@/maps/geo-utils";
+import { MADRID_CATEGORIES, madridCategoryOf } from "@/maps/madrid-categories";
 import type {
     APILocations,
     HomeGameMeasuringQuestions,
@@ -116,6 +119,21 @@ export const determineMeasuringBoundary = async (
     question: MeasuringQuestion,
 ) => {
     const bBox = turf.bbox(mapGeoJSON.get()!);
+
+    const madrid = madridCategoryOf(question.type);
+    if (madrid) {
+        // Distancia al <sitio> más cercano (o al río más cercano).
+        if (MADRID_CATEGORIES[madrid].geometry === "line") {
+            return [
+                turf.combine(
+                    turf.featureCollection(await madridCategoryLines(madrid)),
+                ).features[0],
+            ];
+        }
+        const points = await madridCategoryPoints(madrid);
+        if (points.length === 0) return [turf.multiPolygon([])];
+        return [turf.combine(turf.featureCollection(points)).features[0]];
+    }
 
     switch (question.type) {
         case "highspeed-measure-shinkansen": {
