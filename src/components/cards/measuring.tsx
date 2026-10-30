@@ -16,8 +16,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { t } from "@/i18n";
 import {
     customInitPreference,
-    displayHidingZones,
     drawingQuestionKey,
+    gameSize,
     hiderMode,
     isLoading,
     questionModified,
@@ -25,17 +25,13 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
-import { ADMIN_LEVEL_OPTIONS, MADRID_GROUP } from "@/maps/madrid-categories";
+import { typeChoices } from "@/maps/catalog";
+import { ADMIN_LEVEL_OPTIONS } from "@/maps/madrid-categories";
 import {
     determineMeasuringBoundary,
     findAdminZoneInfo,
 } from "@/maps/questions/measuring";
-import {
-    determineUnionizedStrings,
-    type MeasuringQuestion,
-    measuringQuestionSchema,
-    NO_GROUP,
-} from "@/maps/schema";
+import type { MeasuringQuestion } from "@/maps/schema";
 
 import { AltitudeInfo } from "./AltitudeInfo";
 import { QuestionCard } from "./base";
@@ -54,9 +50,9 @@ export const MeasuringQuestionComponent = ({
     useStore(triggerLocalRefresh);
     const $hiderMode = useStore(hiderMode);
     const $questions = useStore(questions);
-    const $displayHidingZones = useStore(displayHidingZones);
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
     const $customInitPref = useStore(customInitPreference);
     const [customDialogOpen, setCustomDialogOpen] = React.useState(false);
     const label = `${t("Medición")}
@@ -239,55 +235,7 @@ export const MeasuringQuestionComponent = ({
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
                     trigger={t("Tipo de pregunta")}
-                    options={Object.fromEntries(
-                        measuringQuestionSchema.options
-                            .filter((x) => x.description === NO_GROUP)
-                            .flatMap((x) =>
-                                determineUnionizedStrings(x.shape.type),
-                            )
-                            .map((x) => [(x._def as any).value, x.description]),
-                    )}
-                    groups={measuringQuestionSchema.options
-                        .filter((x) => x.description !== NO_GROUP)
-                        .map((x) => [
-                            x.description,
-                            Object.fromEntries(
-                                determineUnionizedStrings(x.shape.type).map(
-                                    (x) => [
-                                        (x._def as any).value,
-                                        x.description,
-                                    ],
-                                ),
-                            ),
-                        ])
-                        .reduce(
-                            (acc, [key, value]) => {
-                                const values = {
-                                    disabled:
-                                        key !== MADRID_GROUP &&
-                                        !$displayHidingZones,
-                                    options: value,
-                                };
-
-                                if (acc[key]) {
-                                    acc[key].options = {
-                                        ...acc[key].options,
-                                        ...value,
-                                    };
-                                } else {
-                                    acc[key] = values;
-                                }
-
-                                return acc;
-                            },
-                            {} as Record<
-                                string,
-                                {
-                                    disabled: boolean;
-                                    options: Record<string, string>;
-                                }
-                            >,
-                        )}
+                    {...typeChoices("measuring", $gameSize, data.type)}
                     value={data.type}
                     onValueChange={async (value) => {
                         if (value === "custom-measure") {

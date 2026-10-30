@@ -21,16 +21,15 @@ import {
     questions,
     triggerLocalRefresh,
 } from "@/lib/context";
+import { gameSize } from "@/lib/context";
 import { cn, mapToObj } from "@/lib/utils";
 import { findTentacleLocations } from "@/maps/api";
+import { entryForType, typeChoices } from "@/maps/catalog";
 import { arcDistance } from "@/maps/geo-utils";
 import { MADRID_TENTACLE_KM, madridCategoryOf } from "@/maps/madrid-categories";
-import {
-    determineUnionizedStrings,
-    NO_GROUP,
-    type TentacleQuestion,
-    tentacleQuestionSchema,
-    type TraditionalTentacleQuestion,
+import type {
+    TentacleQuestion,
+    TraditionalTentacleQuestion,
 } from "@/maps/schema";
 
 import { QuestionCard } from "./base";
@@ -49,6 +48,7 @@ export const TentacleQuestionComponent = ({
     const $questions = useStore(questions);
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
     const label = `${t("Tentáculos")}
     ${
         $questions
@@ -93,29 +93,7 @@ export const TentacleQuestionComponent = ({
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
                     trigger={t("Tipo de lugar")}
-                    options={Object.fromEntries(
-                        tentacleQuestionSchema.options
-                            .filter((x) => x.description === NO_GROUP)
-                            .flatMap((x) =>
-                                determineUnionizedStrings(x.shape.locationType),
-                            )
-                            .map((x) => [(x._def as any).value, x.description]),
-                    )}
-                    groups={Object.fromEntries(
-                        tentacleQuestionSchema.options
-                            .filter((x) => x.description !== NO_GROUP)
-                            .map((x) => [
-                                x.description,
-                                Object.fromEntries(
-                                    determineUnionizedStrings(
-                                        x.shape.locationType,
-                                    ).map((x) => [
-                                        (x._def as any).value,
-                                        x.description,
-                                    ]),
-                                ),
-                            ]),
-                    )}
+                    {...typeChoices("tentacles", $gameSize, data.locationType)}
                     value={data.locationType}
                     onValueChange={async (value) => {
                         if (value === "custom") {
@@ -136,10 +114,13 @@ export const TentacleQuestionComponent = ({
                             data.location = false;
                         } else {
                             data.location = false;
+                            // Radio del reglamento para ese tipo (2 o 25 km).
+                            const entry = entryForType("tentacles", value);
                             const madrid = madridCategoryOf(value);
-                            const km = madrid && MADRID_TENTACLE_KM[madrid];
-                            if (km && !madridCategoryOf(data.locationType)) {
-                                // Radio por defecto de las categorías de Madrid.
+                            const km =
+                                entry?.make?.data.radius ??
+                                (madrid && MADRID_TENTACLE_KM[madrid]);
+                            if (km) {
                                 data.radius = km;
                                 data.unit = "kilometers";
                             }

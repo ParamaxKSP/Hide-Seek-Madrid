@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/sidebar-l";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { t } from "@/i18n";
-import { defaultUnit } from "@/lib/context";
+import { defaultUnit, gameSize } from "@/lib/context";
 import {
     hiderMode,
     isLoading,
@@ -20,6 +20,7 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
+import { availableIn, CATALOG } from "@/maps/catalog";
 import { arcDistance } from "@/maps/geo-utils";
 import type { ThermometerQuestion } from "@/maps/schema";
 
@@ -41,6 +42,7 @@ export const ThermometerQuestionComponent = ({
     const $hiderMode = useStore(hiderMode);
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
 
     const $defaultUnit = useStore(defaultUnit);
     const DISTANCE_UNIT = $defaultUnit ?? "miles";
@@ -142,9 +144,16 @@ export const ThermometerQuestionComponent = ({
                 <Select
                     trigger={t("Distancia de la pregunta")}
                     options={Object.fromEntries(
-                        ["1", "5", "15", "75"].map((km) => [
-                            km,
-                            t("Después de viajar {km} km", { km }),
+                        CATALOG.filter(
+                            (e) =>
+                                e.category === "thermometer" &&
+                                (availableIn(e, $gameSize) ||
+                                    e.make?.data.distance === data.distance),
+                        ).map((e) => [
+                            String(e.make?.data.distance),
+                            t("Después de viajar {km} km", {
+                                km: e.make?.data.distance,
+                            }),
                         ]),
                     )}
                     value={data.distance ? String(data.distance) : ""}

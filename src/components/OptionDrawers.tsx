@@ -40,6 +40,7 @@ import {
     polyGeoJSON,
     questions,
     save,
+    showStationMarkers,
     showTutorial,
     thunderforestApiKey,
     triggerLocalRefresh,
@@ -73,6 +74,7 @@ const GAME_HASH = "partida";
 const MAX_LINK_LENGTH = 16000;
 
 export const OptionDrawers = ({ className }: { className?: string }) => {
+    const $showStationMarkers = useStore(showStationMarkers);
     useStore(triggerLocalRefresh);
     const $defaultCustomQuestions = useStore(defaultCustomQuestions);
     const $allowGooglePlusCodes = useStore(allowGooglePlusCodes);
@@ -587,6 +589,19 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                 </Button>
                             </div>
                             <Separator className="bg-slate-300 w-[280px]" />
+                            <div className="flex flex-row items-center gap-2">
+                                <label className="text-2xl font-semibold font-poppins">
+                                    {t("¿Marcar las estaciones en el mapa?")}
+                                </label>
+                                <Checkbox
+                                    checked={$showStationMarkers}
+                                    onCheckedChange={() =>
+                                        showStationMarkers.set(
+                                            !$showStationMarkers,
+                                        )
+                                    }
+                                />
+                            </div>
                             <div className="flex flex-row items-center gap-2">
                                 <label className="text-2xl font-semibold font-poppins">
                                     {t("¿Animar los movimientos del mapa?")}

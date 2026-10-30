@@ -22,7 +22,12 @@ import {
     questions,
 } from "@/lib/context";
 import { getGpsPosition, newQuestionsAtGps } from "@/lib/gps";
-import { availableIn, CATALOG, catalogIdOf } from "@/maps/catalog";
+import {
+    availableIn,
+    CATALOG,
+    catalogIdOf,
+    categoryAvailable,
+} from "@/maps/catalog";
 
 /**
  * Dónde se crea una pregunta nueva: en la ubicación del GPS si está activado
@@ -45,6 +50,7 @@ export const AddQuestionDialog = ({
     children: React.ReactNode;
 }) => {
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
     const $newQuestionsAtGps = useStore(newQuestionsAtGps);
     const [open, setOpen] = React.useState(false);
 
@@ -217,15 +223,17 @@ export const AddQuestionDialog = ({
                     >
                         {t("Termómetro")}
                     </SidebarMenuButton>
-                    <SidebarMenuButton
-                        onClick={async () => {
-                            setOpen(false);
-                            await runAddTentacles();
-                        }}
-                        disabled={$isLoading}
-                    >
-                        {t("Tentáculos")}
-                    </SidebarMenuButton>
+                    {categoryAvailable("tentacles", $gameSize) && (
+                        <SidebarMenuButton
+                            onClick={async () => {
+                                setOpen(false);
+                                await runAddTentacles();
+                            }}
+                            disabled={$isLoading}
+                        >
+                            {t("Tentáculos")}
+                        </SidebarMenuButton>
+                    )}
                     <SidebarMenuButton
                         onClick={async () => {
                             setOpen(false);

@@ -1,5 +1,5 @@
 import * as turf from "@turf/turf";
-import type { Feature, MultiPolygon } from "geojson";
+import type { Feature, MultiPolygon, Position } from "geojson";
 import _ from "lodash";
 import osmtogeojson from "osmtogeojson";
 import { toast } from "react-toastify";
@@ -185,9 +185,19 @@ export const determineMeasuringBoundary = async (
             }
             (question as any).cat.zoneName = zoneInfo.name;
 
-            // Convert the polygon to its outline (the border)
-            const outline = turf.polygonToLine(zoneInfo.boundary);
-            return [outline];
+            // El borde como una sola línea. La Comunidad de Madrid es un
+            // MultiPolygon (tiene un enclave) y polygonToLine devuelve entonces
+            // una colección, que el cálculo de distancias no admite.
+            const coords: Position[][] = [];
+            turf.flattenEach(
+                turf.polygonToLine(zoneInfo.boundary as any) as any,
+                (line: any) => {
+                    if (line.geometry.type === "LineString")
+                        coords.push(line.geometry.coordinates);
+                    else coords.push(...line.geometry.coordinates);
+                },
+            );
+            return [turf.multiLineString(coords)];
         }
         case "coastline": {
             const coastline = turf.lineToPolygon(

@@ -120,6 +120,16 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - El service worker ahora sí se registra (antes no se cargaba nunca): guarda la app, los datos de Madrid y el módulo de geometría, así que con la web abierta una vez se puede jugar sin cobertura. Las versiones nuevas se instalan solas al volver a abrirla.
 - El fondo del mapa (CARTO/OpenStreetMap) sigue viniendo de fuera; se guardan las teselas ya vistas (hasta 4000, 60 días) para que se vean sin conexión.
 
+## Preguntas según el tamaño de partida
+
+- Los desplegables de tipo (coincidencia, medición, tentáculos, termómetro y preguntas sin mapa) salen del catálogo y solo muestran lo que existe en el tamaño elegido. En partida pequeña no aparece «Tentáculos» al añadir.
+- Si una pregunta ya hecha no existe en el tamaño actual, se conserva y se marca «(no existe en este tamaño)».
+- Las variantes del juego original que no se usan en Madrid (7-Eleven, gran ciudad, costa…) ya no salen; las personalizadas van en su propio grupo.
+
+## Estaciones en el mapa
+
+- Todas las estaciones de los tipos elegidos se marcan con un punto (nombre al pasar por encima), sin tener que mostrar las zonas de escondite. Se puede quitar en Opciones.
+
 ## Idioma
 
 - La interfaz está en español. Cada texto pasa por `t()` (`src/i18n/index.ts`) con el texto español como clave: para traducir la app basta con añadir un diccionario `español → idioma`. Lo que falte se ve en español.

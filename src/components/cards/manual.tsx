@@ -6,30 +6,45 @@ import {
     MENU_ITEM_CLASSNAME,
     SidebarMenuItem,
 } from "@/components/ui/sidebar-l";
+import { t } from "@/i18n";
 import {
+    gameSize,
     isLoading,
     questionModified,
     questions,
     triggerLocalRefresh,
 } from "@/lib/context";
-import { CATALOG, catalogEntry, CATEGORY_INFO } from "@/maps/catalog";
+import {
+    availableIn,
+    CATALOG,
+    catalogEntry,
+    CATEGORY_INFO,
+    type GameSize,
+} from "@/maps/catalog";
 import type { ManualQuestion } from "@/maps/schema";
 
 import { QuestionCard } from "./base";
 
-/** Preguntas del catálogo que la app no dibuja, agrupadas por categoría. */
-const MANUAL_GROUPS = Object.fromEntries(
-    Object.entries(CATEGORY_INFO)
-        .map(([category, info]) => [
-            info.label,
-            Object.fromEntries(
-                CATALOG.filter((e) => e.category === category && !e.make).map(
-                    (e) => [e.id, e.label],
+/**
+ * Preguntas del catálogo que la app no dibuja, agrupadas por categoría: solo
+ * las que existen en el tamaño de partida (y la elegida, aunque no exista).
+ */
+const manualGroups = (size: GameSize, current: string) =>
+    Object.fromEntries(
+        Object.entries(CATEGORY_INFO)
+            .map(([category, info]) => [
+                t(info.label),
+                Object.fromEntries(
+                    CATALOG.filter(
+                        (e) =>
+                            e.category === category &&
+                            !e.make &&
+                            (availableIn(e, size) || e.id === current),
+                    ).map((e) => [e.id, t(e.label)]),
                 ),
-            ),
-        ])
-        .filter(([, options]) => Object.keys(options).length > 0),
-);
+            ])
+            .filter(([, options]) => Object.keys(options).length > 0),
+    );
 
 /**
  * Pregunta que la app no dibuja (fotos, «calle o camino», costa…). Solo se
@@ -49,15 +64,16 @@ export const ManualQuestionComponent = ({
     useStore(triggerLocalRefresh);
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
+    const $gameSize = useStore(gameSize);
     const info = CATEGORY_INFO[data.category];
-    const label = `${info.label} ${
+    const label = `${t(info.label)} ${
         $questions
             .filter(
                 (q) => q.id === "manual" && q.data.category === data.category,
             )
             .map((q) => q.key)
             .indexOf(questionKey) + 1
-    } (sin mapa)`;
+    } ${t("(sin mapa)")}`;
 
     return (
         <QuestionCard
@@ -76,8 +92,8 @@ export const ManualQuestionComponent = ({
         >
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Select
-                    trigger="Pregunta"
-                    groups={MANUAL_GROUPS}
+                    trigger={t("Pregunta")}
+                    groups={manualGroups($gameSize, data.catalogId)}
                     value={data.catalogId}
                     onValueChange={(value) => {
                         const entry = catalogEntry(value);
@@ -92,7 +108,7 @@ export const ManualQuestionComponent = ({
             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                 <Input
                     className="rounded-md p-2"
-                    placeholder="Respuesta (opcional)"
+                    placeholder={t("Respuesta (opcional)")}
                     value={data.answer}
                     onChange={(e) =>
                         questionModified((data.answer = e.target.value))

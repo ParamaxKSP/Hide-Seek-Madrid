@@ -246,7 +246,14 @@ export const animateMapMovements = persistentAtom<boolean>(
     },
 );
 /** Tamaño de partida (reglamento): cambia el radio de escondite y las preguntas disponibles. */
-export const gameSize = persistentAtom<GameSize>("gameSize", "medium");
+export const gameSize = persistentAtom<GameSize>("gameSize", "medium", {
+    encode: (x) => x,
+    // Un valor guardado raro (p. ej. con comillas) no debe romper la app.
+    decode: (x) => {
+        const v = x.replace(/"/g, "");
+        return v === "small" || v === "large" ? v : "medium";
+    },
+});
 
 export const hidingRadius = persistentAtom<number>("hidingRadius", 0.5, {
     encode: JSON.stringify,
@@ -274,6 +281,16 @@ export const showTransitLines = persistentAtom<boolean>(
         decode: JSON.parse,
     },
 );
+/** Marca cada estación en el mapa aunque no se vean las zonas de escondite. */
+export const showStationMarkers = persistentAtom<boolean>(
+    "showStationMarkers",
+    true,
+    {
+        encode: JSON.stringify,
+        decode: JSON.parse,
+    },
+);
+
 export const disabledStations = persistentAtom<string[]>(
     "disabledStations",
     [],

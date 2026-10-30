@@ -5,6 +5,7 @@ import "leaflet-contextmenu";
 import { useStore } from "@nanostores/react";
 import * as turf from "@turf/turf";
 import * as L from "leaflet";
+import osmtogeojson from "osmtogeojson";
 import { useEffect, useMemo } from "react";
 import { MapContainer, ScaleControl, TileLayer } from "react-leaflet";
 import { toast } from "react-toastify";
@@ -14,11 +15,15 @@ import { roundHistory } from "@/lib/clock";
 import {
     additionalMapGeoLocations,
     addQuestion,
+    ALL_STATIONS,
     animateMapMovements,
     autoZoom,
     baseTileLayer,
     disabledLines,
+    disabledStations,
+    displayHidingZonesOptions,
     followMe,
+    gameSize,
     hiderMode,
     isLoading,
     leafletMapContext,
@@ -29,6 +34,7 @@ import {
     polyGeoJSON,
     questionFinishedMapData,
     questions,
+    showStationMarkers,
     showTransitLines,
     thunderforestApiKey,
     triggerLocalRefresh,
@@ -36,8 +42,14 @@ import {
 import { cn } from "@/lib/utils";
 import { applyQuestionsToMapGeoData, holedMask } from "@/maps";
 import { hiderifyQuestion } from "@/maps";
-import { clearCache, determineMapBoundaries } from "@/maps/api";
-import { loadTransitLines } from "@/maps/api/local";
+import {
+    clearCache,
+    determineMapBoundaries,
+    findPlacesInZone,
+} from "@/maps/api";
+import { isStationDisabled, loadTransitLines } from "@/maps/api/local";
+import { categoryAvailable } from "@/maps/catalog";
+import { extractStationLabel } from "@/maps/geo-utils/special";
 
 import { DraggableMarkers } from "./DraggableMarkers";
 import { LeafletFullScreenButton } from "./LeafletFullScreenButton";
@@ -131,7 +143,11 @@ export const Map = ({ className }: { className?: string }) => {
     const $followMe = useStore(followMe);
     const $permanentOverlay = useStore(permanentOverlay);
     const $showTransitLines = useStore(showTransitLines);
+    const $showStationMarkers = useStore(showStationMarkers);
+    const $displayHidingZonesOptions = useStore(displayHidingZonesOptions);
+    const $disabledStations = useStore(disabledStations);
     const $disabledLines = useStore(disabledLines);
+    const $mapGeoJSON = useStore(mapGeoJSON);
     const $roundHistory = useStore(roundHistory);
     const map = useStore(leafletMapContext);
 
@@ -298,6 +314,10 @@ export const Map = ({ className }: { className?: string }) => {
                     {
                         text: t("Añadir tentáculos"),
                         callback: (e: any) => {
+                            if (!categoryAvailable("tentacles", gameSize.get()))
+                                return toast.info(
+                                    t("En partida pequeña no hay tentáculos."),
+                                );
                             addQuestion({
                                 id: "tentacles",
                                 data: {
@@ -591,6 +611,77 @@ export const Map = ({ className }: { className?: string }) => {
             map.removeLayer(group);
         };
     }, [map, $showTransitLines, $disabledLines]);
+
+    // Todas las estaciones de los tipos elegidos, como puntos pequeños sobre
+    // las líneas (sin tener que mostrar las zonas de escondite).
+    useEffect(() => {
+        if (!map) return;
+        if (!map.getPane("stationMarkers")) {
+            const pane = map.createPane("stationMarkers");
+            pane.style.zIndex = "360";
+        }
+        const group = L.layerGroup();
+        let cancelled = false;
+        if ($showStationMarkers) {
+            const types = $displayHidingZonesOptions.length
+                ? $displayHidingZonesOptions
+                : [ALL_STATIONS];
+            findPlacesInZone(
+                types[0],
+                undefined,
+                "nwr",
+                "center",
+                types.slice(1),
+            )
+                .then((data) => {
+                    if (cancelled) return;
+                    for (const f of osmtogeojson(data).features as any[]) {
+                        const props = f.properties ?? {};
+                        if (
+                            isStationDisabled(
+                                props,
+                                $disabledStations,
+                                $disabledLines,
+                            )
+                        )
+                            continue;
+                        const [lng, lat] = turf.getCoord(turf.centroid(f)) as [
+                            number,
+                            number,
+                        ];
+                        L.circleMarker([lat, lng], {
+                            pane: "stationMarkers",
+                            radius: 3.5,
+                            weight: 1.5,
+                            color: "#1f2937",
+                            fillColor: "#ffffff",
+                            fillOpacity: 1,
+                        })
+                            .bindTooltip(extractStationLabel(f) ?? "", {
+                                direction: "top",
+                            })
+                            .addTo(group);
+                    }
+                    group.addTo(map);
+                })
+                .catch(() => {
+                    toast.error(t("No se han podido cargar las estaciones."), {
+                        toastId: "station-markers-error",
+                    });
+                });
+        }
+        return () => {
+            cancelled = true;
+            map.removeLayer(group);
+        };
+    }, [
+        map,
+        $showStationMarkers,
+        $displayHidingZonesOptions,
+        $disabledStations,
+        $disabledLines,
+        $mapGeoJSON,
+    ]);
 
     // Estaciones reveladas al hacer Move en esta ronda.
     useEffect(() => {

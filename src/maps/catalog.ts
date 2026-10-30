@@ -4,6 +4,7 @@
  *  - saber cuántas veces se ha hecho ya una pregunta (el coste se multiplica),
  *  - sortear otra pregunta no hecha de la misma categoría (randomize).
  */
+import { t } from "@/i18n";
 import type { Question, QuestionCategory } from "@/maps/schema";
 
 export type GameSize = "small" | "medium" | "large";
@@ -360,6 +361,91 @@ export const costMultiplier = (questions: Question[], key: number): number => {
 
 export const availableIn = (entry: CatalogEntry, size: GameSize) =>
     !entry.sizes || entry.sizes.includes(size);
+
+/** Valores de las categorías propias de Madrid (van en su propio grupo). */
+const MADRID_VALUES = new Set(MADRID.map(([k]) => `madrid-${k}`));
+
+/** Tipos personalizados (dibujados a mano) de cada categoría. */
+const CUSTOM_TYPES: Record<string, Record<string, string>> = {
+    matching: {
+        "custom-zone": "Zona personalizada",
+        "custom-points": "Puntos personalizados",
+    },
+    measuring: { "custom-measure": "Medición personalizada" },
+    tentacles: { custom: "Lugares personalizados" },
+};
+
+/** Nombre del grupo de categorías de Madrid en las listas. */
+export const MADRID_GROUP_LABEL = "Categorías de Madrid";
+/** Nombre del grupo de preguntas personalizadas en las listas. */
+export const CUSTOM_GROUP_LABEL = "Personalizadas";
+
+/**
+ * Opciones del desplegable «Tipo» de una pregunta, sacadas del catálogo:
+ * solo las que existen en el tamaño de partida. Si la pregunta ya tiene un
+ * tipo que no está (por ejemplo de una partida más grande), se mantiene para
+ * que se vea cuál es.
+ */
+export const typeChoices = (
+    category: "matching" | "measuring" | "tentacles",
+    size: GameSize,
+    current?: string,
+) => {
+    const field = category === "tentacles" ? "locationType" : "type";
+    const options: Record<string, string> = {};
+    const madrid: Record<string, string> = {};
+    for (const e of CATALOG) {
+        if (e.category !== category || !e.make || !availableIn(e, size))
+            continue;
+        const value = e.make.data[field];
+        if (typeof value !== "string") continue;
+        const label =
+            value === "zone"
+                ? "División administrativa"
+                : value === "admin-measure"
+                  ? "Borde de división administrativa"
+                  : e.label;
+        const target = MADRID_VALUES.has(value) ? madrid : options;
+        if (!(value in target)) target[value] = t(label);
+    }
+    const custom = Object.fromEntries(
+        Object.entries(CUSTOM_TYPES[category]).map(([k, v]) => [k, t(v)]),
+    );
+    if (
+        current &&
+        !(current in options) &&
+        !(current in madrid) &&
+        !(current in custom)
+    ) {
+        const entry = CATALOG.find(
+            (e) => e.category === category && e.make?.data[field] === current,
+        );
+        options[current] = entry
+            ? t("{label} (no existe en este tamaño)", { label: t(entry.label) })
+            : current;
+    }
+    const groups: Record<string, { options: Record<string, string> }> = {};
+    if (Object.keys(madrid).length)
+        groups[t(MADRID_GROUP_LABEL)] = { options: madrid };
+    groups[t(CUSTOM_GROUP_LABEL)] = { options: custom };
+    return { options, groups };
+};
+
+/** Entrada del catálogo que corresponde a un tipo elegido en el desplegable. */
+export const entryForType = (
+    category: "matching" | "measuring" | "tentacles",
+    value: string,
+) =>
+    CATALOG.find(
+        (e) =>
+            e.category === category &&
+            e.make?.data[category === "tentacles" ? "locationType" : "type"] ===
+                value,
+    );
+
+/** ¿Hay alguna pregunta de esta categoría en este tamaño de partida? */
+export const categoryAvailable = (category: QuestionCategory, size: GameSize) =>
+    CATALOG.some((e) => e.category === category && availableIn(e, size));
 
 /** Preguntas de la misma categoría que aún no se han hecho en este tamaño de partida. */
 export const unaskedEntries = (
