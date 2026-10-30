@@ -1,0 +1,11 @@
+{
+  "north": 41.18,
+  "west": -4.59,
+  "dLat": 0.0016666666666666668,
+  "dLon": 0.0016666666666666668,
+  "width": 930,
+  "height": 786,
+  "min": 381,
+  "max": 2402,
+  "source": "Copernicus DEM GLO-90 © DLR e.V. 2010-2014 y © Airbus Defence and Space GmbH 2014-2018, proporcionado en el marco de COPERNICUS por la Unión Europea y la ESA"
+}

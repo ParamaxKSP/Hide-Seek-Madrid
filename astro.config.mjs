@@ -22,7 +22,7 @@ export default defineConfig({
             registerType: "autoUpdate",
             workbox: {
                 // Incluye los datos de Madrid para que la app funcione con mala cobertura.
-                globPatterns: ["**/*.{js,css,html,png,ico,svg,json,wasm}"],
+                globPatterns: ["**/*.{js,css,html,png,ico,svg,json,wasm,bin}"],
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
                 // Las páginas de revisión no son la app: que no se sustituyan por ella.
                 navigateFallbackDenylist: [/\/revision\//],

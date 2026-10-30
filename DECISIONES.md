@@ -71,7 +71,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - **Repetir** una pregunta multiplica el coste: la 2.ª vez ×2 (roba 3 y se queda 1, dos veces), la 3.ª ×3… Cuentan como la misma pregunta sus variantes (p. ej. el zoo con o sin zonas de escondite, o un radar de 5 km y otro de 5000 m).
 - **Veto:** la pregunta cuenta como hecha (repetirla cuesta más), no cambia el mapa, no se responde en modo escondido y no da cartas.
 - **Randomize:** sortea otra pregunta no hecha de la misma categoría y la pone en el mismo sitio; la original no cuenta como hecha. El catálogo es el del reglamento para partida mediana más las reglas de casa (`src/maps/catalog.ts`).
-- Las preguntas que la app no dibuja (fotos, calle o camino, masa de tierra, frontera, costa y nivel del mar, hasta que se haga la altitud) se apuntan como «sin mapa» para que cuenten en el coste y el sorteo.
+- Las preguntas que la app no dibuja (fotos, calle o camino, masa de tierra, frontera y costa) se apuntan como «sin mapa» para que cuenten en el coste y el sorteo.
 - En Madrid, la 1.ª y la 2.ª división administrativa (comunidad y provincia) son la misma: el Matching siempre da «sí» y el Measuring mide al borde de la Comunidad. Frontera y costa no existen dentro del mapa: respuesta nula.
 - El termómetro guarda la distancia de la pregunta (1, 5 o 15 km) y avisa de cuánto falta por recorrer en línea recta.
 
@@ -107,6 +107,12 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - El tiempo del escondido empieza a contar cuando acaba el tiempo para esconderse (como en el programa) y se para en pausas, descansos y Move.
 - **Move:** el escondido dice su estación de antes, que queda marcada en morado en el mapa; las preguntas pasan al historial de la ronda y siguen contando para el coste al repetirlas; el reloj se para lo que dure el Move (por defecto, el tiempo para esconderse; se pone el de la carta). Empezar ronda nueva borra preguntas e historial.
 - **Termómetro con GPS:** «Empezar aquí» marca el inicio en tu posición, sigue la distancia recorrida en línea recta y avisa (con vibración) al llegar a la distancia de la pregunta; «Terminar aquí» marca el final. Los fallos pasajeros del GPS no cortan el seguimiento.
+
+## Altitud
+
+- «Nivel del mar» se responde con el modelo del terreno Copernicus GLO-90, reducido a celdas de unos 140 × 185 m (`scripts/dem_to_grid.py` → `public/data/altitud.bin`). Comprobado: Sol 666 m, Aranjuez 499 m, Alcalá 592 m, Peñalara 2398 m.
+- Por defecto se compara con la altitud del terreno donde está el buscador; se puede escribir la que marque el móvil.
+- Va incluida en la caché, así que también funciona sin cobertura.
 
 ## Sin conexión y sin terceros
 
