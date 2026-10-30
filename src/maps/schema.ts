@@ -482,7 +482,10 @@ const madridMeasuringQuestionSchema = baseMeasuringQuestionSchema.extend({
             .literal("madrid-stations")
             .describe("Estaciones (Metro, ML y Cercanías)"),
         z.literal("madrid-water").describe("Masas de agua"),
+        z.literal("altitude").describe("Nivel del mar (altitud)"),
     ]),
+    /** Altitud del buscador medida con el móvil (m); si no, la del terreno. */
+    altitude: z.number().optional(),
 });
 
 export const measuringQuestionSchema = z.union([

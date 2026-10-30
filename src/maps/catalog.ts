@@ -152,7 +152,7 @@ export const CATALOG: CatalogEntry[] = [
         type: "admin-measure",
         cat: { adminLevel: 6 },
     }),
-    measure("sea-level", "Nivel del mar (altitud)"),
+    measure("altitude", "Nivel del mar (altitud)", { type: "altitude" }),
     measure("madrid-water", "Masa de agua", { type: "madrid-water" }),
     measure("coastline", "Costa", undefined, NO_BORDER),
     ...PLACES.map(([k, l]) => measure(k, l, { type: `${k}-full` })),

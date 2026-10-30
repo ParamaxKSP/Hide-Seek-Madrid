@@ -12,6 +12,7 @@ import {
     trainStations,
 } from "@/lib/context";
 import {
+    altitudeAt,
     fetchCoastline,
     findAdminBoundary,
     findPlacesInZone,
@@ -22,6 +23,7 @@ import {
     nearestToQuestion,
     prettifyLocation,
     QuestionSpecificLocation,
+    regionAbove,
 } from "@/maps/api";
 import {
     arcBufferToPoint,
@@ -334,6 +336,7 @@ export const determineMeasuringBoundary = async (
         case "mcdonalds":
         case "seven11":
         case "rail-measure":
+        case "altitude":
             return false;
     }
 };
@@ -363,11 +366,30 @@ const bufferedDeterminer = _.memoize(
         }),
 );
 
+/**
+ * Altitud del buscador: la que ha medido con el móvil, si la ha escrito; si
+ * no, la del terreno donde se hace la pregunta.
+ */
+export const seekerAltitude = async (question: MeasuringQuestion) => {
+    const typed = (question as { altitude?: number }).altitude;
+    if (typeof typed === "number") return typed;
+    const ground = await altitudeAt(question.lat, question.lng);
+    if (ground === null) throw new Error("Fuera del modelo de altitud");
+    return ground;
+};
+
 export const adjustPerMeasuring = async (
     question: MeasuringQuestion,
     mapData: any,
 ) => {
     if (mapData === null) return;
+
+    if (question.type === "altitude") {
+        // Más cerca del nivel del mar = más bajo que el buscador: fuera de la
+        // zona que está a su altitud o más arriba.
+        const above = await regionAbove(await seekerAltitude(question));
+        return modifyMapData(mapData, above, !question.hiderCloser);
+    }
 
     const buffer = await bufferedDeterminer(question);
 
@@ -379,6 +401,16 @@ export const adjustPerMeasuring = async (
 export const hiderifyMeasuring = async (question: MeasuringQuestion) => {
     const $hiderMode = hiderMode.get();
     if ($hiderMode === false) {
+        return question;
+    }
+
+    if (question.type === "altitude") {
+        const hider = await altitudeAt(
+            $hiderMode.latitude,
+            $hiderMode.longitude,
+        );
+        if (hider !== null)
+            question.hiderCloser = hider < (await seekerAltitude(question));
         return question;
     }
 
@@ -497,6 +529,10 @@ export const hiderifyMeasuring = async (question: MeasuringQuestion) => {
 
 export const measuringPlanningPolygon = async (question: MeasuringQuestion) => {
     try {
+        if (question.type === "altitude")
+            return turf.polygonToLine(
+                await regionAbove(await seekerAltitude(question)),
+            );
         const buffered = await bufferedDeterminer(question);
 
         if (buffered === false) return false;

@@ -36,6 +36,7 @@ import {
     NO_GROUP,
 } from "@/maps/schema";
 
+import { AltitudeInfo } from "./AltitudeInfo";
 import { QuestionCard } from "./base";
 
 export const MeasuringQuestionComponent = ({
@@ -116,6 +117,14 @@ export const MeasuringQuestionComponent = ({
                         </Suspense>
                     </SidebarMenuItem>
                 </>
+            );
+            break;
+        case "altitude":
+            questionSpecific = (
+                <AltitudeInfo
+                    data={data as any}
+                    disabled={!data.drag || $isLoading}
+                />
             );
             break;
         case "mcdonalds":

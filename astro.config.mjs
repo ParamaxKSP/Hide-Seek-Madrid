@@ -20,7 +20,7 @@ export default defineConfig({
         AstroPWA({
             workbox: {
                 // Incluye los datos de Madrid para que la app funcione con mala cobertura.
-                globPatterns: ["**/*.{js,css,html,png,ico,svg,json}"],
+                globPatterns: ["**/*.{js,css,html,png,ico,svg,json,bin}"],
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
             },
             manifest: {
