@@ -1,3 +1,4 @@
+import esriConfig from "@arcgis/core/config.js";
 import * as units from "@arcgis/core/core/units.js";
 import * as geodesicBufferOperator from "@arcgis/core/geometry/operators/geodesicBufferOperator.js";
 import * as geodeticDistanceOperator from "@arcgis/core/geometry/operators/geodeticDistanceOperator.js";
@@ -15,6 +16,12 @@ import type {
 } from "geojson";
 
 import { BLANK_GEOJSON } from "@/maps/api";
+
+// El módulo de geometría (pe-wasm) lo sirve la propia web en vez de
+// js.arcgis.com: funciona sin conexión y sin terceros.
+if (typeof window !== "undefined") {
+    esriConfig.assetsPath = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/arcgis`;
+}
 
 export { geoSpatialVoronoi } from "@/maps/geo-utils/voronoi";
 

@@ -22,3 +22,6 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+
+# copiado de node_modules al compilar (scripts/copy-arcgis-assets.mjs)
+public/arcgis/

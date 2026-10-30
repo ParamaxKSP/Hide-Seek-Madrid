@@ -108,6 +108,12 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - **Move:** el escondido dice su estación de antes, que queda marcada en morado en el mapa; las preguntas pasan al historial de la ronda y siguen contando para el coste al repetirlas; el reloj se para lo que dure el Move (por defecto, el tiempo para esconderse; se pone el de la carta). Empezar ronda nueva borra preguntas e historial.
 - **Termómetro con GPS:** «Empezar aquí» marca el inicio en tu posición, sigue la distancia recorrida en línea recta y avisa (con vibración) al llegar a la distancia de la pregunta; «Terminar aquí» marca el final. Los fallos pasajeros del GPS no cortan el seguimiento.
 
+## Sin conexión y sin terceros
+
+- El módulo de geometría de ArcGIS (pe-wasm) lo sirve la propia web: se copia de `node_modules` al compilar (`scripts/copy-arcgis-assets.mjs`) y ya no se pide nada a js.arcgis.com.
+- El service worker ahora sí se registra (antes no se cargaba nunca): guarda la app, los datos de Madrid y el módulo de geometría, así que con la web abierta una vez se puede jugar sin cobertura. Las versiones nuevas se instalan solas al volver a abrirla.
+- El fondo del mapa (CARTO/OpenStreetMap) sigue viniendo de fuera; se guardan las teselas ya vistas (hasta 4000, 60 días) para que se vean sin conexión.
+
 ## Exclusiones del mapa
 
 - **No** se excluye el aeropuerto: su zona pública es un escondite válido.

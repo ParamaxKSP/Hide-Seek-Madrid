@@ -99,6 +99,8 @@ const { className } = Astro.props;
         />
 
         {pwaInfo && <Fragment set:html={pwaInfo.webManifest.linkTag} />}
+        <!-- Service worker: guarda la app y los datos para jugar sin conexión. -->
+        <script is:inline src="/Hide-Seek-Madrid/registerSW.js"></script>
     </head>
     <body class:list={[className, "dark"]}>
         <slot />

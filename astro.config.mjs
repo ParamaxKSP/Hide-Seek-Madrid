@@ -18,10 +18,29 @@ export default defineConfig({
             },
         }),
         AstroPWA({
+            // Las versiones nuevas se instalan solas al volver a abrir la web.
+            registerType: "autoUpdate",
             workbox: {
                 // Incluye los datos de Madrid para que la app funcione con mala cobertura.
-                globPatterns: ["**/*.{js,css,html,png,ico,svg,json}"],
+                globPatterns: ["**/*.{js,css,html,png,ico,svg,json,wasm}"],
                 maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+                // El fondo del mapa viene de CARTO/OSM: se guardan las teselas
+                // ya vistas para que se vean también sin conexión.
+                runtimeCaching: [
+                    {
+                        urlPattern:
+                            /^https:\/\/([a-d]\.basemaps\.cartocdn\.com|tile\.openstreetmap\.org)\//,
+                        handler: "CacheFirst",
+                        options: {
+                            cacheName: "teselas",
+                            expiration: {
+                                maxEntries: 4000,
+                                maxAgeSeconds: 60 * 60 * 24 * 60,
+                            },
+                            cacheableResponse: { statuses: [0, 200] },
+                        },
+                    },
+                ],
             },
             manifest: {
                 name: "Jet Lag Hide and Seek Map Generator",
