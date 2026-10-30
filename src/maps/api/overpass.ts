@@ -15,6 +15,14 @@ import { safeUnion } from "@/maps/geo-utils";
 
 import { cacheFetch, determineCache } from "./cache";
 import { LOCATION_FIRST_TAG, OVERPASS_HOSTS } from "./constants";
+import {
+    isLocalQuery,
+    localAdminBoundary,
+    localAround,
+    localFindPlaces,
+    localMadridBoundary,
+    MADRID_OSM_ID,
+} from "./local";
 import type {
     EncompassingTentacleQuestionSchema,
     HomeGameMatchingQuestions,
@@ -93,6 +101,9 @@ export const determineGeoJSON = async (
         N: "node",
     };
     const osmType = osmTypeMap[osmTypeLetter];
+    if (osmType === "relation" && Number(osmId) === MADRID_OSM_ID) {
+        return osmtogeojson(await localMadridBoundary());
+    }
     const query = `[out:json];${osmType}(${osmId});out geom;`;
     const data = await getOverpassData(
         query,
@@ -112,6 +123,7 @@ export const findTentacleLocations = async (
     question: TentacleLocationQuery,
     text: string = "Determining tentacle locations...",
 ) => {
+    const localFilter = `[${LOCATION_FIRST_TAG[question.locationType]}=${question.locationType}]`;
     const query = `
 [out:json][timeout:25];
 nwr["${LOCATION_FIRST_TAG[question.locationType]}"="${question.locationType}"](around:${turf.convertLength(
@@ -121,7 +133,14 @@ nwr["${LOCATION_FIRST_TAG[question.locationType]}"="${question.locationType}"](a
     )}, ${question.lat}, ${question.lng});
 out center;
     `;
-    const data = await getOverpassData(query, text);
+    const data = isLocalQuery([localFilter])
+        ? await localAround(
+              localFilter,
+              turf.convertLength(question.radius, question.unit, "meters"),
+              question.lat,
+              question.lng,
+          )
+        : await getOverpassData(query, text);
     const elements = data.elements;
     const response = turf.points([]);
     elements.forEach((element: any) => {
@@ -159,6 +178,9 @@ export const findAdminBoundary = async (
     longitude: number,
     adminLevel: 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10,
 ) => {
+    if (isLocalQuery([])) {
+        return localAdminBoundary(latitude, longitude, adminLevel);
+    }
     const query = `
 [out:json];
 is_in(${latitude}, ${longitude})->.a;
@@ -249,7 +271,10 @@ export const findPlacesInZone = async (
 ) => {
     let query = "";
     const $polyGeoJSON = polyGeoJSON.get();
-    if ($polyGeoJSON) {
+    const useLocal = isLocalQuery([filter, ...alternatives]);
+    if (useLocal) {
+        // Datos de Madrid incluidos en la app: no hace falta consultar Overpass.
+    } else if ($polyGeoJSON) {
         query = `
 [out:json]${timeoutDuration != 0 ? `[timeout:${timeoutDuration}]` : ""};
 (
@@ -316,11 +341,9 @@ out ${outType};
         out ${outType};
         `;
     }
-    const data = await getOverpassData(
-        query,
-        loadingText,
-        CacheType.ZONE_CACHE,
-    );
+    const data = useLocal
+        ? await localFindPlaces([filter, ...alternatives], searchType, outType)
+        : await getOverpassData(query, loadingText, CacheType.ZONE_CACHE);
     const subtractedEntries = additionalMapGeoLocations
         .get()
         .filter((e) => !e.added);
@@ -380,6 +403,10 @@ export const nearestToQuestion = async (
     let radius = 30;
     let instances: any = { features: [] };
     while (instances.features.length === 0) {
+        if (radius > 600) {
+            toast.error("No hay ningún lugar de este tipo en el mapa.");
+            throw new Error("No locations of this type");
+        }
         instances = await findTentacleLocations(
             {
                 lat: question.lat,

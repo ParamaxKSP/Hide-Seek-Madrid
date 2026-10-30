@@ -18,6 +18,11 @@ export default defineConfig({
             },
         }),
         AstroPWA({
+            workbox: {
+                // Incluye los datos de Madrid para que la app funcione con mala cobertura.
+                globPatterns: ["**/*.{js,css,html,png,ico,svg,json}"],
+                maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+            },
             manifest: {
                 name: "Jet Lag Hide and Seek Map Generator",
                 short_name: "Map Generator",

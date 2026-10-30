@@ -19,25 +19,49 @@ import {
     type Units,
 } from "@/maps/schema";
 
+// Hide-Seek-Madrid: la primera vez que se abre esta versión, se borran los
+// ajustes guardados de la app original (mapa de Nueva York, millas…) para
+// empezar con los valores de Madrid.
+const MADRID_SETTINGS_VERSION = "1";
+try {
+    if (
+        localStorage.getItem("jlmSettingsVersion") !== MADRID_SETTINGS_VERSION
+    ) {
+        [
+            "mapGeoLocation",
+            "additionalMapGeoLocations",
+            "polyGeoJSON",
+            "questions",
+            "defaultUnit",
+            "hidingRadius",
+            "hidingRadiusUnits",
+            "displayHidingZonesOptions",
+            "disabledStations",
+        ].forEach((k) => localStorage.removeItem(k));
+        localStorage.setItem("jlmSettingsVersion", MADRID_SETTINGS_VERSION);
+    }
+} catch {
+    // Sin localStorage (compilación o navegación privada): se usan los valores por defecto.
+}
+
 export const mapGeoLocation = persistentAtom<OpenStreetMap>(
     "mapGeoLocation",
     {
         type: "Feature",
         properties: {
             osm_type: "R",
-            osm_id: 175905,
-            osm_key: "place",
-            osm_value: "city",
-            type: "city",
-            name: "New York",
-            state: "New York",
-            country: "United States",
-            countrycode: "US",
-            extent: [40.91763, -74.258843, 40.476578, -73.700233],
+            osm_id: 349055,
+            osm_key: "boundary",
+            osm_value: "administrative",
+            type: "state",
+            name: "Comunidad de Madrid",
+            country: "España",
+            countrycode: "ES",
+            extent: [41.16599, -4.57908, 39.88463, -3.05298],
         },
         geometry: {
             type: "Point",
-            coordinates: [40.7127281, -74.0060152],
+            coordinates: [40.4168, -3.7038],
         },
     },
     {
@@ -88,7 +112,7 @@ export const questionModified = (..._: any[]) => {
 
 export const leafletMapContext = atom<Map | null>(null);
 
-export const defaultUnit = persistentAtom<Units>("defaultUnit", "miles");
+export const defaultUnit = persistentAtom<Units>("defaultUnit", "kilometers");
 export const hiderMode = persistentAtom<
     | false
     | {
@@ -110,7 +134,7 @@ export const displayHidingZones = persistentAtom<boolean>(
 );
 export const displayHidingZonesOptions = persistentAtom<string[]>(
     "displayHidingZonesOptions",
-    ["[railway=station]"],
+    ["[railway=station]", "[railway=halt]"],
     {
         encode: JSON.stringify,
         decode: JSON.parse,
@@ -176,7 +200,7 @@ export const hidingRadius = persistentAtom<number>("hidingRadius", 0.5, {
 });
 export const hidingRadiusUnits = persistentAtom<Units>(
     "hidingRadiusUnits",
-    "miles",
+    "kilometers",
     {
         encode: JSON.stringify,
         decode: JSON.parse,
