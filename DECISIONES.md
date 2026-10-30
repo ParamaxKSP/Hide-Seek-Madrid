@@ -108,7 +108,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
   - Por municipio solo hay datos oficiales del Ministerio del Interior. En el 1.er trimestre de 2026 la tasa más alta es la de Madrid capital (14,2 delitos por 1.000 habitantes, frente a 5,4–11 en el resto), inflada por los hurtos a turistas: no sirve para excluir.
   - Por distrito o barrio no hay datos oficiales de delitos; las detenciones de la Policía Municipal (Centro 152 al mes, Puente de Vallecas 95, Carabanchel 74) reflejan sobre todo dónde hay más gente y policía. No se propone excluir ningún municipio ni distrito entero.
   - Propuesta guardada para el futuro: excluir solo la **Cañada Real Galiana, sectores 2 a 6** (zonas habitadas según OpenStreetMap, con 100 m de margen; unos 3,8 km²), dejando el sector 1 (Coslada), que se está regularizando. Solo afectaría a la zona de escondite de Rivas Urbanizaciones (L9), que perdería el 20 % de su círculo. Polígonos en `data-src/propuesta_canada_real.geojson`.
-- Se excluyen estaciones que no reciban al menos **1 tren/hora** de una misma línea. Horario de prueba: laborables de 6:00 a 18:00 (octubre de 2026); el horario definitivo está por decidir.
+- Se excluyen estaciones que no reciban al menos **1 tren/hora** de una misma línea. Es una regla de casa (como en el programa): el reglamento no fija ninguna frecuencia mínima. Horario de prueba: laborables de 6:00 a 18:00 (octubre de 2026). Lo más probable es jugar en fin de semana; el horario definitivo se fija cuando haya una fecha concreta (en fin de semana pasan menos trenes y es probable que queden fuera más estaciones).
 
 ## Reglas de casa sobre categorías
 
