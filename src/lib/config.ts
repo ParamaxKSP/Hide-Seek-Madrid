@@ -17,6 +17,7 @@ import { z } from "zod";
 
 import {
     additionalMapGeoLocations,
+    ALL_STATIONS,
     disabledLines,
     disabledStations,
     displayHidingZonesOptions,
@@ -28,6 +29,7 @@ import {
     mapGeoLocation,
     polyGeoJSON,
     questions,
+    STATION_TYPE_OPTIONS,
 } from "@/lib/context";
 import { compress, decompress } from "@/lib/utils";
 import { adminFeatures } from "@/maps/api/local";
@@ -145,7 +147,7 @@ export const PRESETS: PresetConfig[] = [
     preset(
         "almendra",
         "Almendra central",
-        "Los 7 distritos de dentro de la M-30 (aprox.): 42 km², 79 estaciones.",
+        "Los 7 distritos de dentro de la M-30 (aprox.): 42 km², 80 estaciones.",
         "small",
         { kind: "zonas", municipios: [], distritos: ALMENDRA },
     ),
@@ -196,6 +198,21 @@ const hash = (s: string) => {
     return (h >>> 0).toString(36);
 };
 
+const SEAM_M = 25;
+
+/** Quita agujeros menores de 0,05 km² (restos de bordes que no encajan). */
+const dropTinyHoles = (
+    f: Feature<Polygon | MultiPolygon>,
+): Feature<Polygon | MultiPolygon> => {
+    const clean = (rings: Polygon["coordinates"]) => [
+        rings[0],
+        ...rings.slice(1).filter((r) => turf.area(turf.polygon([r])) >= 50_000),
+    ];
+    return f.geometry.type === "Polygon"
+        ? turf.polygon(clean(f.geometry.coordinates))
+        : turf.multiPolygon(f.geometry.coordinates.map(clean));
+};
+
 /** Polígono de la zona de juego (null = la Comunidad entera). */
 export const areaPolygon = async (
     area: GameArea,
@@ -217,8 +234,19 @@ export const areaPolygon = async (
     );
     if (missing.length)
         throw new Error(`Zonas desconocidas: ${missing.join(", ")}`);
-    const union =
-        parts.length > 1 ? turf.union(turf.featureCollection(parts)) : parts[0];
+    // Los bordes de municipios vecinos no coinciden al milímetro: al unirlos
+    // quedan rendijas de pocos metros que el mapa pintaría como excluidas.
+    // Se cierran ensanchando cada pieza 25 m, uniéndolas y volviendo a encoger.
+    const grown = parts.map(
+        (p) => turf.buffer(p, SEAM_M, { units: "meters", steps: 4 })!,
+    );
+    const merged =
+        grown.length > 1 ? turf.union(turf.featureCollection(grown)) : grown[0];
+    const union = merged
+        ? dropTinyHoles(
+              turf.buffer(merged, -SEAM_M, { units: "meters", steps: 4 })!,
+          )
+        : null;
     if (!union) throw new Error("La zona está vacía");
     return turf.featureCollection([
         { ...union, properties: {} } as Feature<Polygon | MultiPolygon>,
@@ -243,7 +271,9 @@ export const applyConfig = async (input: GameConfig) => {
         config.hidingRadiusKm ?? SIZE_INFO[config.size].hidingRadiusKm,
     );
     hidingRadiusUnits.set("kilometers");
-    if (config.stationTypes) displayHidingZonesOptions.set(config.stationTypes);
+    const known = STATION_TYPE_OPTIONS.map((o) => o.value);
+    const types = (config.stationTypes ?? []).filter((t) => known.includes(t));
+    displayHidingZonesOptions.set(types.length ? types : [ALL_STATIONS]);
     disabledLines.set(config.disabledLines);
     disabledStations.set(config.disabledStations);
 
@@ -304,6 +334,26 @@ export const captureConfig = (name: string, description = ""): GameConfig => {
         disabledLines: disabledLines.get(),
         disabledStations: disabledStations.get(),
     });
+};
+
+/**
+ * Al abrir la app: si la zona activa es de municipios o distritos y se
+ * calculó con una versión anterior (p. ej. con rendijas entre bordes), se
+ * recalcula sin tocar las preguntas.
+ */
+export const refreshActiveArea = async () => {
+    const active = activeConfig.get();
+    if (!active || active.area.kind !== "zonas") return false;
+    const current = polyGeoJSON.get();
+    if (active.areaKey !== areaKey(current)) return false; // la han cambiado a mano
+    const poly = await areaPolygon(active.area);
+    const key = areaKey(poly);
+    if (key === active.areaKey) return false;
+    polyGeoJSON.set(poly);
+    mapGeoJSON.set(poly);
+    activeConfig.set({ ...active, areaKey: key });
+    questions.set([...questions.get()]); // redibujar el mapa
+    return true;
 };
 
 /** Marca una configuración como la que se está jugando (sin cambiar nada). */

@@ -18,6 +18,7 @@ import {
     SidebarMenuItem,
 } from "@/components/ui/sidebar-r";
 import {
+    ALL_STATIONS,
     animateMapMovements,
     autoZoom,
     customStations as customStationsAtom,
@@ -35,6 +36,7 @@ import {
     planningModeEnabled,
     questionFinishedMapData,
     questions,
+    STATION_TYPE_OPTIONS,
     trainStations,
     useCustomStations as useCustomStationsAtom,
 } from "@/lib/context";
@@ -94,6 +96,8 @@ export const ZoneSidebar = () => {
     const $displayHidingZones = useStore(displayHidingZones);
     const $questionFinishedMapData = useStore(questionFinishedMapData);
     const $displayHidingZonesOptions = useStore(displayHidingZonesOptions);
+    // Para redibujar el selector de tipos cuando se cambia desde fuera.
+    const [stationTypesKey, setStationTypesKey] = useState(0);
     const $displayHidingZonesStyle = useStore(displayHidingZonesStyle);
     const $hidingRadius = useStore(hidingRadius);
     const $hidingRadiusUnits = useStore(hidingRadiusUnits);
@@ -185,11 +189,10 @@ export const ZoneSidebar = () => {
             isLoading.set(true);
 
             const needsDefault = !useCustomStations || includeDefaultStations;
-            if (needsDefault && $displayHidingZonesOptions.length === 0) {
-                toast.error("At least one place type must be selected");
-                isLoading.set(false);
-                return;
-            }
+            // Sin tipos marcados: todas las estaciones (antes daba un error).
+            const stationTypes = $displayHidingZonesOptions.length
+                ? $displayHidingZonesOptions
+                : [ALL_STATIONS];
 
             let places: StationPlace[] = [];
 
@@ -212,11 +215,11 @@ export const ZoneSidebar = () => {
                 // @ts-expect-error osmtogeojson always defines properties with an "id" string
                 places = osmtogeojson(
                     await findPlacesInZone(
-                        $displayHidingZonesOptions[0],
-                        "Finding stations. This may take a while. Do not press any buttons while this is processing. Don't worry, it will be cached.",
+                        stationTypes[0],
+                        "Buscando estaciones…",
                         "nwr",
                         "center",
-                        $displayHidingZonesOptions.slice(1),
+                        stationTypes.slice(1),
                     ),
                 ).features;
 
@@ -782,65 +785,27 @@ export const ZoneSidebar = () => {
                             )}
                             <SidebarMenuItem className={MENU_ITEM_CLASSNAME}>
                                 <MultiSelect
-                                    options={[
-                                        {
-                                            label: "Railway Stations",
-                                            value: "[railway=station]",
-                                        },
-                                        {
-                                            label: "Railway Halts",
-                                            value: "[railway=halt]",
-                                        },
-                                        {
-                                            label: "Railway Stops",
-                                            value: "[railway=stop]",
-                                        },
-                                        {
-                                            label: "Tram Stops",
-                                            value: "[railway=tram_stop]",
-                                        },
-                                        {
-                                            label: "Bus Stops",
-                                            value: "[highway=bus_stop]",
-                                        },
-                                        {
-                                            label: "Ferry Terminals",
-                                            value: "[amenity=ferry_terminal]",
-                                        },
-                                        {
-                                            label: "Ferry Platforms (public transport)",
-                                            value: "[public_transport=platform][platform=ferry]",
-                                        },
-                                        {
-                                            label: "Funicular Stations",
-                                            value: "[railway=funicular]",
-                                        },
-                                        {
-                                            label: "Aerialway Stations",
-                                            value: "[aerialway=station]",
-                                        },
-                                        {
-                                            label: "Railway Stations Excluding Subways",
-                                            value: "[railway=station][subway!=yes]",
-                                        },
-                                        {
-                                            label: "Subway Stations",
-                                            value: "[railway=station][subway=yes]",
-                                        },
-                                        {
-                                            label: "Light Rail Stations",
-                                            value: "[railway=station][light_rail=yes]",
-                                        },
-                                        {
-                                            label: "Light Rail Halts",
-                                            value: "[railway=halt][light_rail=yes]",
-                                        },
-                                    ]}
-                                    onValueChange={
-                                        displayHidingZonesOptions.set
-                                    }
+                                    key={stationTypesKey}
+                                    options={STATION_TYPE_OPTIONS}
+                                    onValueChange={(values) => {
+                                        // Sin ningún tipo no habría zonas: se vuelve a «Todas».
+                                        if (values.length === 0) {
+                                            toast.info(
+                                                "Tiene que haber al menos un tipo de estación: se usan todas.",
+                                                { toastId: "station-types" },
+                                            );
+                                            displayHidingZonesOptions.set([
+                                                ALL_STATIONS,
+                                            ]);
+                                            setStationTypesKey((k) => k + 1);
+                                        } else {
+                                            displayHidingZonesOptions.set(
+                                                values,
+                                            );
+                                        }
+                                    }}
                                     defaultValue={$displayHidingZonesOptions}
-                                    placeholder="Select allowed places"
+                                    placeholder="Tipos de estación"
                                     animation={2}
                                     maxCount={3}
                                     modalPopover

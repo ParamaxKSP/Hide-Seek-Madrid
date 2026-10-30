@@ -26,6 +26,7 @@ import {
     type GameConfig,
     markActive,
     PRESETS,
+    refreshActiveArea,
     saveConfig,
     savedConfigs,
     SIZE_INFO,
@@ -113,6 +114,13 @@ export const ConfigDialog = () => {
     // La ventana solo existe en el navegador (la barra se genera también en el servidor).
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
+
+    // Zona activa calculada con una versión anterior: se recalcula.
+    useEffect(() => {
+        refreshActiveArea().catch((e) =>
+            console.warn("No se pudo recalcular la zona", e),
+        );
+    }, []);
 
     // ¿Se ha abierto la app con un enlace de configuración?
     useEffect(() => {

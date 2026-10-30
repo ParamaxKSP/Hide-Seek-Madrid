@@ -36,7 +36,7 @@ describe("configuraciones de partida", async () => {
         const expected: Record<string, [number, number]> = {
             metropolitana: [1261, 327],
             madrid: [604, 220],
-            almendra: [42, 79],
+            almendra: [42, 80],
         };
         for (const p of cfg.PRESETS) {
             await cfg.applyConfig(p);
@@ -48,8 +48,22 @@ describe("configuraciones de partida", async () => {
                 continue;
             }
             const [km2, n] = expected[p.id];
-            expect(Math.round(turf.area(poly!) / 1e6), p.id).toBe(km2);
+            expect(Math.abs(turf.area(poly!) / 1e6 - km2), p.id).toBeLessThan(
+                1,
+            );
             expect(stations.elements.length, p.id).toBe(n);
+            // Sin rendijas entre municipios o distritos vecinos.
+            const g = poly!.features[0].geometry;
+            const polys =
+                g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+            expect(
+                polys.flatMap((r) => r.slice(1)).length,
+                `${p.id}: agujeros`,
+            ).toBe(0);
+            // Una sola pieza, salvo el enclave de Móstoles.
+            expect(polys.length, `${p.id}: piezas`).toBe(
+                p.id === "metropolitana" ? 2 : 1,
+            );
         }
     });
 
@@ -140,5 +154,67 @@ describe("configuraciones de partida", async () => {
         expect(drawn.area.kind).toBe("poligono");
         const encoded = await cfg.encodeConfig(drawn);
         expect(encoded.length).toBeLessThan(8000);
+    });
+
+    it("los tipos de estación nunca quedan vacíos ni con tipos de otra ciudad", async () => {
+        await cfg.applyConfig({
+            ...cfg.PRESETS[0],
+            stationTypes: ["[highway=bus_stop]", "[railway=halt]"],
+        });
+        expect(ctx.displayHidingZonesOptions.get()).toEqual([
+            "[railway=station]",
+        ]);
+        await cfg.applyConfig({
+            ...cfg.PRESETS[0],
+            stationTypes: ["[railway=station][subway=yes]"],
+        });
+        expect(ctx.displayHidingZonesOptions.get()).toEqual([
+            "[railway=station][subway=yes]",
+        ]);
+        const metro = await api.findPlacesInZone(
+            "[railway=station][subway=yes]",
+        );
+        const cerc = await api.findPlacesInZone("[railway=station][train=yes]");
+        expect(metro.elements.length).toBeGreaterThan(200);
+        expect(cerc.elements.length).toBeGreaterThan(50);
+    });
+
+    it("recalcula una zona guardada con rendijas sin borrar las preguntas", async () => {
+        await cfg.applyConfig(cfg.PRESETS[1]);
+        // Simula la zona antigua (unión directa, con rendijas).
+        const admin = await api.adminFeatures();
+        const parts = admin.filter(
+            (f) =>
+                f.properties.admin_level === "8" &&
+                (cfg.PRESETS[1].area as any).municipios.includes(
+                    f.properties.name,
+                ),
+        );
+        const old = turf.featureCollection([
+            turf.union(turf.featureCollection(parts))!,
+        ]);
+        ctx.polyGeoJSON.set(old as any);
+        cfg.markActive(cfg.PRESETS[1]);
+        ctx.questions.set([
+            {
+                id: "manual",
+                key: 9,
+                data: {
+                    category: "photo",
+                    catalogId: "photo:1",
+                    answer: "",
+                    drag: true,
+                    collapsed: false,
+                    hidden: false,
+                    vetoed: false,
+                },
+            },
+        ]);
+        expect(await cfg.refreshActiveArea()).toBe(true);
+        const g = ctx.polyGeoJSON.get()!.features[0].geometry as any;
+        const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+        expect(polys.flatMap((r: any) => r.slice(1)).length).toBe(0);
+        expect(ctx.questions.get()).toHaveLength(1);
+        expect(await cfg.refreshActiveArea()).toBe(false);
     });
 });

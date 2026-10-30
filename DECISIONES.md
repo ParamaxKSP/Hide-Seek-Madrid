@@ -91,8 +91,10 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 | Toda la Comunidad | 8.019 km², 355 estaciones | Mediana |
 | Área metropolitana | Madrid y los 14 municipios con Metro o Metro Ligero: 1.261 km², 327 estaciones | Mediana |
 | Madrid capital | 604 km², 220 estaciones | Mediana |
-| Almendra central | Los 7 distritos de dentro de la M-30 (aprox.): 42 km², 79 estaciones | Pequeña |
+| Almendra central | Los 7 distritos de dentro de la M-30 (aprox.): 42 km², 80 estaciones | Pequeña |
 
+- Las zonas hechas con municipios o distritos se unen cerrando las rendijas de unos metros que dejan los bordes vecinos (si no, el mapa las pintaba de azul como excluidas). Las zonas guardadas con la versión anterior se recalculan solas al abrir la app.
+- Tipos de estación que pueden ser zona de escondite: todas, Metro, Metro Ligero o Cercanías (se quitaron las opciones genéricas de la app original: autobús, ferri, funicular…). Nunca puede quedar vacío: vuelve a «Todas».
 - Cada jugador puede guardar la configuración actual con un nombre («Mis configuraciones»).
 - **Compartir sin servidor:** por enlace (la configuración va comprimida detrás de `#`, que el navegador nunca envía a la web) o por archivo `.json`. Al abrir el enlace, la app pregunta antes de cargarla y la guarda en «Mis configuraciones».
 - Cargar una configuración empieza una partida nueva: se borran las preguntas (la app avisa).

@@ -164,12 +164,31 @@ export const displayHidingZones = persistentAtom<boolean>(
         decode: JSON.parse,
     },
 );
+/** Tipos de estación que pueden ser zona de escondite en Madrid. */
+export const ALL_STATIONS = "[railway=station]";
+export const STATION_TYPE_OPTIONS = [
+    { label: "Todas (Metro, Metro Ligero y Cercanías)", value: ALL_STATIONS },
+    { label: "Metro", value: "[railway=station][subway=yes]" },
+    { label: "Metro Ligero", value: "[railway=station][light_rail=yes]" },
+    { label: "Cercanías", value: "[railway=station][train=yes]" },
+];
 export const displayHidingZonesOptions = persistentAtom<string[]>(
     "displayHidingZonesOptions",
-    ["[railway=station]", "[railway=halt]"],
+    [ALL_STATIONS],
     {
         encode: JSON.stringify,
-        decode: JSON.parse,
+        // Solo los tipos de estación de Madrid; si no queda ninguno, todas.
+        decode: (x) => {
+            try {
+                const known = STATION_TYPE_OPTIONS.map((o) => o.value);
+                const v = (JSON.parse(x) as string[]).filter((t) =>
+                    known.includes(t),
+                );
+                return v.length ? v : [ALL_STATIONS];
+            } catch {
+                return [ALL_STATIONS];
+            }
+        },
     },
 );
 export const displayHidingZonesStyle = persistentAtom<
