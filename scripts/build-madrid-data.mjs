@@ -205,20 +205,109 @@ const lowFrequency = [];
 const stationsPerLine = {};
 const skippedPerLine = {};
 let nStations = 0;
-for (const s of transit.stations) {
-    if (!turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), comunidadRaw))
-        continue;
+
+// Regla de casa: cuando Metro, Metro Ligero y Cercanías tienen estación en el
+// mismo sitio (Sol, Aeropuerto T4, Nuevos Ministerios…), se juntan en una sola
+// estación situada en el punto medio, con una sola zona de escondite.
+const STOP_WORDS = new Set([
+    "de",
+    "del",
+    "la",
+    "las",
+    "el",
+    "los",
+    "y",
+    "estacion",
+    "cercanias",
+    "renfe",
+    "madrid",
+    "central",
+    "centro",
+]);
+const tokens = (n) =>
+    n
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((t) => t && !STOP_WORDS.has(t));
+const sameName = (a, b) => {
+    const ta = tokens(a);
+    const tb = tokens(b);
+    if (!ta.length || !tb.length) return false;
+    const [small, big] = ta.length <= tb.length ? [ta, tb] : [tb, ta];
+    return small.every((t) => big.includes(t));
+};
+const MERGE_DISTANCE_M = 450;
+const insideStations = transit.stations.filter((s) =>
+    turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), comunidadRaw),
+);
+const groups = insideStations.map((s) => ({ members: [s] }));
+const pairs = [];
+for (let i = 0; i < groups.length; i++)
+    for (let j = i + 1; j < groups.length; j++) {
+        const a = groups[i].members[0];
+        const b = groups[j].members[0];
+        if (a.system === b.system || !sameName(a.name, b.name)) continue;
+        const d = turf.distance([a.lon, a.lat], [b.lon, b.lat], {
+            units: "meters",
+        });
+        if (d <= MERGE_DISTANCE_M) pairs.push([d, i, j]);
+    }
+pairs.sort((x, y) => x[0] - y[0]);
+const groupOf = groups.map((g) => g);
+for (const [, i, j] of pairs) {
+    const gi = groupOf[i];
+    const gj = groupOf[j];
+    if (gi === gj) continue;
+    const systems = new Set(gi.members.map((m) => m.system));
+    if (gj.members.some((m) => systems.has(m.system))) continue; // una estación por sistema
+    gi.members.push(...gj.members);
+    for (let k = 0; k < groupOf.length; k++)
+        if (groupOf[k] === gj) groupOf[k] = gi;
+}
+const SYSTEM_RANK = { metro: 0, ligero: 1, cercanias: 2 };
+const mergedStations = [...new Set(groupOf)].map(({ members }) => {
+    members.sort((a, b) => SYSTEM_RANK[a.system] - SYSTEM_RANK[b.system]);
+    const lines = {};
+    for (const m of members) Object.assign(lines, m.lines);
+    return {
+        name: members[0].name,
+        lat: members.reduce((t, m) => t + m.lat, 0) / members.length,
+        lon: members.reduce((t, m) => t + m.lon, 0) / members.length,
+        osm: members.find((m) => m.osm)?.osm ?? null,
+        systems: members.map((m) => m.system),
+        names: members.map((m) => m.name),
+        lines,
+    };
+});
+const merged = mergedStations.filter((s) => s.systems.length > 1);
+counts.estacionesUnidas = merged.length;
+fs.writeFileSync(
+    new URL("../data-src/estaciones_unidas.txt", import.meta.url),
+    merged
+        .map((s) => `${s.names.join(" + ")}  →  ${s.name}`)
+        .sort()
+        .join("\n") + "\n",
+);
+
+for (const s of mergedStations) {
     const lines = Object.keys(s.lines).sort();
     // Metro no tiene horarios por parada (min = null): toda la red supera 1 tren/hora.
     const frequent = lines.filter(
         (l) => s.lines[l].min === null || s.lines[l].min >= MIN_TRAINS_PER_HOUR,
     );
-    const tags = {
-        ...SYSTEM_TAGS[s.system],
-        name: s.name,
-        "jlm:system": s.system,
-        "jlm:lines": lines.join(";"),
-    };
+    const tags = { name: s.name };
+    for (const sys of s.systems) Object.assign(tags, SYSTEM_TAGS[sys]);
+    if (s.systems.length > 1) {
+        tags.network = s.systems
+            .map((sys) => SYSTEM_TAGS[sys].network)
+            .join(";");
+        // En OSM, "station" es el tipo de la estación; si mezcla sistemas no se indica uno solo.
+        delete tags.station;
+    }
+    tags["jlm:system"] = s.systems.join(";");
+    tags["jlm:lines"] = lines.join(";");
     const partial = lines.filter((l) => s.lines[l].partial);
     if (partial.length) tags["jlm:partial"] = partial.join(";");
     if (frequent.length === 0) {

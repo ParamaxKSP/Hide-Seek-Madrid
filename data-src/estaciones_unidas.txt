@@ -1,0 +1,30 @@
+Aeropuerto T4 + Aeropuerto T4  →  Aeropuerto T4
+Alcorcón Central + Alcorcón  →  Alcorcón Central
+Aluche + Aluche  →  Aluche
+Aravaca + Aravaca  →  Aravaca
+Atocha + Atocha-Cercanías  →  Atocha
+Chamartín + Madrid-Chamartín-Clara Campoamor  →  Chamartín
+Colonia Jardín + Colonia Jardín  →  Colonia Jardín
+Coslada Central + Coslada  →  Coslada Central
+Cuatro Vientos + Cuatro Vientos  →  Cuatro Vientos
+Delicias + Delicias  →  Delicias
+El Casar + El Casar  →  El Casar
+Embajadores + Embajadores  →  Embajadores
+Fuenlabrada Central + Fuenlabrada  →  Fuenlabrada Central
+Fuente de la Mora + Fuente de la Mora  →  Fuente de la Mora
+Getafe Central + Getafe Centro  →  Getafe Central
+Laguna + Laguna  →  Laguna
+Las Tablas + Las Tablas  →  Las Tablas
+Leganés Central + Leganés  →  Leganés Central
+Méndez Álvaro + Méndez Álvaro  →  Méndez Álvaro
+Móstoles Central + Móstoles  →  Móstoles Central
+Nuevos Ministerios + Nuevos Ministerios  →  Nuevos Ministerios
+Paco de Lucía + Mirasierra-Paco de Lucía  →  Paco de Lucía
+Parla Centro + Parla  →  Parla Centro
+Pinar de Chamartín + Pinar de Chamartín  →  Pinar de Chamartín
+Pirámides + Pirámides  →  Pirámides
+Pitis + Pitis  →  Pitis
+Príncipe Pío + Madrid-Príncipe Pío  →  Príncipe Pío
+Sol + Sol  →  Sol
+Villa de Vallecas + Vallecas  →  Villa de Vallecas
+Villaverde Alto + Villaverde Alto  →  Villaverde Alto

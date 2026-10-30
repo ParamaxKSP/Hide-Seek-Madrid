@@ -50,7 +50,8 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - **Cercanías:** GTFS oficial de Renfe (núcleo de Madrid).
 - Frecuencias calculadas para el viernes 30/10/2026 entre las 6:00 y las 18:00: una estación queda fuera si en alguna franja horaria no pasa ningún tren de ninguna de sus líneas (Zarzalejo, Robledo de Chavela, Santa María de la Alameda y Puerto de Navacerrada).
 - Las estaciones fuera de la Comunidad (p. ej. Guadalajara) no existen en el mapa.
-- **¿Misma línea?:** los buscadores eligen en qué línea van; cuentan todas las estaciones en las que para algún tren de esa línea. La app avisa cuando la línea tiene trenes que pasan sin parar por alguna estación.
+- **Estaciones de intercambio (regla de casa):** cuando Metro, Metro Ligero y Cercanías tienen estación en el mismo sitio (a menos de 450 m y con el mismo nombre), se juntan en una sola estación en el punto medio, con una sola zona de escondite. Son 30; la lista está en `data-src/estaciones_unidas.txt`.
+- **¿Misma línea?:** es una pregunta normal (no hace falta activar las zonas de escondite). Si la respuesta es sí, quedan las zonas de escondite de las estaciones de esa línea; si es no, las del resto de estaciones. Los buscadores eligen en qué línea van; cuentan todas las estaciones en las que para algún tren de esa línea. La app avisa cuando la línea tiene trenes que pasan sin parar por alguna estación.
 - Se pueden quitar líneas enteras como zonas de escondite: una estación desaparece cuando todas sus líneas están quitadas.
 - Para regenerar: `python3 -I scripts/gtfs_to_transit.py …` y después `node scripts/build-madrid-data.mjs`.
 

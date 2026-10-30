@@ -167,7 +167,9 @@ describe("datos locales de Madrid", async () => {
         const all = await local.loadMadridData();
         const named = (n: string, sys: string) =>
             all.elements.find(
-                (e) => e.tags.name === n && e.tags["jlm:system"] === sys,
+                (e) =>
+                    e.tags.name === n &&
+                    e.tags["jlm:system"]?.split(";").includes(sys),
             )!;
         const sol = named("Sol", "metro");
         const valdecarros = named("Valdecarros", "metro");
@@ -196,5 +198,45 @@ describe("datos locales de Madrid", async () => {
         expect(stations.elements.map((e: any) => e.tags.name)).not.toContain(
             "Zarzalejo",
         );
+    });
+
+    it("une las estaciones de Metro y Cercanías del mismo sitio", async () => {
+        const d = await local.loadMadridData();
+        const sol = d.elements.filter((e) => e.tags.name === "Sol");
+        expect(sol.length).toBe(1);
+        expect(sol[0].tags["jlm:lines"]?.split(";")).toEqual(
+            expect.arrayContaining(["L1", "L2", "L3", "C-3", "C-4"]),
+        );
+        expect(sol[0].tags.subway).toBe("yes");
+        expect(sol[0].tags.train).toBe("yes");
+    });
+
+    it("dibuja la zona de «¿misma línea?» sin activar las zonas de escondite", async () => {
+        const turf = await import("@turf/turf");
+        const inZone = (zone: any, lat: number, lng: number) =>
+            zone.features.some((f: any) =>
+                turf.booleanPointInPolygon(turf.point([lng, lat]), f),
+            );
+        const valdecarros: [number, number] = [40.3693, -3.6125];
+        const moncloa: [number, number] = [40.4351, -3.7192];
+        const yes = await local.sameLineZone(
+            40.41692,
+            -3.70348,
+            "L1",
+            true,
+            0.5,
+            "kilometers",
+        );
+        expect(inZone(yes, ...valdecarros)).toBe(true);
+        expect(inZone(yes, ...moncloa)).toBe(false);
+        const no = await local.sameLineZone(
+            40.41692,
+            -3.70348,
+            "L1",
+            false,
+            0.5,
+            "kilometers",
+        );
+        expect(inZone(no, ...moncloa)).toBe(true);
     });
 });

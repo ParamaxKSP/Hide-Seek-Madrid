@@ -297,10 +297,15 @@ const hidingZoneMatchingQuestionsSchema = baseMatchingQuestionSchema.extend({
         z
             .literal("same-length-station")
             .describe("Station Has Same Length Question"),
-        z
-            .literal("same-train-line")
-            .describe("Station On Same Train Line Question"),
     ]),
+});
+
+/**
+ * «¿Tu estación está en la misma línea que el tren en el que vamos?».
+ * Funciona como una pregunta normal: no necesita activar las zonas de escondite.
+ */
+const trainLineMatchingQuestionSchema = baseMatchingQuestionSchema.extend({
+    type: z.literal("same-train-line").describe("Same Train Line Question"),
     /** Línea del tren en el que van los buscadores (vacío: todas las de la estación). */
     trainLine: z.string().optional(),
 });
@@ -317,6 +322,7 @@ export const matchingQuestionSchema = z.union([
     zoneMatchingQuestionsSchema.describe(NO_GROUP),
     ordinaryMatchingQuestionSchema.describe(NO_GROUP),
     customMatchingQuestionSchema.describe(NO_GROUP),
+    trainLineMatchingQuestionSchema.describe(NO_GROUP),
     hidingZoneMatchingQuestionsSchema.describe("Hiding Zone Mode"),
     homeGameMatchingQuestionsSchema.describe("Hiding Zone Mode"),
 ]);

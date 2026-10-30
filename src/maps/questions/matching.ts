@@ -12,6 +12,8 @@ import { toast } from "react-toastify";
 
 import {
     hiderMode,
+    hidingRadius,
+    hidingRadiusUnits,
     mapGeoJSON,
     mapGeoLocation,
     polyGeoJSON,
@@ -22,6 +24,7 @@ import {
     LOCATION_FIRST_TAG,
     nearestToQuestion,
     prettifyLocation,
+    sameLineZone,
     stripAccents,
     trainLineNodeFinder,
 } from "@/maps/api";
@@ -136,8 +139,7 @@ export const determineMatchingBoundary = _.memoize(
             case "consulate":
             case "park":
             case "same-first-letter-station":
-            case "same-length-station":
-            case "same-train-line": {
+            case "same-length-station": {
                 return false;
             }
             case "custom-zone": {
@@ -258,11 +260,41 @@ export const determineMatchingBoundary = _.memoize(
         }),
 );
 
+/** Zona posible de «¿Misma línea?» (ver sameLineZone). */
+export const determineSameLineZone = _.memoize(
+    async (question: MatchingQuestion) => {
+        const zone = await sameLineZone(
+            question.lat,
+            question.lng,
+            (question as { trainLine?: string }).trainLine,
+            question.same,
+            hidingRadius.get(),
+            hidingRadiusUnits.get(),
+        );
+        return zone ? safeUnion(zone) : null;
+    },
+    (question: MatchingQuestion) =>
+        JSON.stringify({
+            lat: question.lat,
+            lng: question.lng,
+            line: (question as { trainLine?: string }).trainLine,
+            same: question.same,
+            radius: hidingRadius.get(),
+            units: hidingRadiusUnits.get(),
+        }),
+);
+
 export const adjustPerMatching = async (
     question: MatchingQuestion,
     mapData: any,
 ) => {
     if (mapData === null) return;
+
+    if (question.type === "same-train-line") {
+        const zone = await determineSameLineZone(question);
+        // La zona ya es «donde puede estar el escondido», sea sí o no.
+        return zone ? modifyMapData(mapData, zone, true) : mapData;
+    }
 
     const boundary = await determineMatchingBoundary(question);
 
@@ -419,7 +451,11 @@ export const hiderifyMatching = async (question: MatchingQuestion) => {
 
 export const matchingPlanningPolygon = async (question: MatchingQuestion) => {
     try {
-        const boundary = await determineMatchingBoundary(question);
+        const boundary =
+            question.type === "same-train-line"
+                ? await determineSameLineZone(question)
+                : await determineMatchingBoundary(question);
+        if (!boundary) return false;
 
         if (boundary === false) {
             return false;

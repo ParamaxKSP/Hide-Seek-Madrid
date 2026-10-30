@@ -397,3 +397,35 @@ export const isStationDisabled = (
     const lines = (props["jlm:lines"] as string | undefined)?.split(";");
     return !!lines && lines.every((l) => disabledLines.includes(l));
 };
+
+/**
+ * Zona posible tras «¿Misma línea?»: círculos de escondite alrededor de las
+ * estaciones de la línea (si la respuesta es sí) o de todas las demás (si es no).
+ * La línea es la elegida por los buscadores o, si no eligen, cualquiera de las
+ * que paran en la estación más cercana a la pregunta.
+ */
+export const sameLineZone = async (
+    lat: number,
+    lng: number,
+    lineId: string | undefined,
+    same: boolean,
+    radius: number,
+    units: turf.Units,
+) => {
+    const station = await nearestTransitStation(lat, lng);
+    if (!station) return null;
+    const lineStations = new Set(
+        await localTrainLineStations(`node/${station.id}`, lineId),
+    );
+    const d = await loadMadridData();
+    const circles = d.elements
+        .filter(
+            (e): e is Extract<LocalElement, { type: "node" }> =>
+                e.type === "node" &&
+                e.tags.railway === "station" &&
+                !!e.tags["jlm:lines"] &&
+                lineStations.has(e.id) === same,
+        )
+        .map((e) => turf.circle([e.lon, e.lat], radius, { units, steps: 32 }));
+    return circles.length ? turf.featureCollection(circles) : null;
+};
