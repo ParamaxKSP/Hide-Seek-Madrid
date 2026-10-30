@@ -3,9 +3,10 @@
  * la ronda, pausa, reanudar, Move, encontrado) y todo lo demás se calcula a
  * partir de ellos, así que sobrevive a recargar la página o cerrar el móvil.
  *
- * El tiempo del escondido cuenta desde que empieza la ronda (incluido el
- * tiempo para esconderse) y se para durante las pausas, los descansos y los
- * Move. Al encontrarle se suman las cartas de tiempo que tenga en la mano.
+ * El tiempo del escondido empieza a contar cuando acaba el tiempo para
+ * esconderse (como en el programa) y se para durante las pausas, los
+ * descansos y los Move. Al encontrarle se suman las cartas de tiempo que
+ * tenga en la mano.
  */
 import { persistentAtom } from "@nanostores/persistent";
 
@@ -30,7 +31,7 @@ export type ClockPhase =
 export interface RoundStatus {
     hider: string;
     phase: ClockPhase;
-    /** Tiempo del escondido hasta ahora (ms), sin pausas ni Move. */
+    /** Tiempo del escondido hasta ahora (ms): desde que acaba el de esconderse, sin pausas ni Move. */
     hiderMs: number;
     /** Lo que queda de la fase actual (para esconderse o del Move), en ms. */
     remainingMs: number | null;
@@ -79,8 +80,11 @@ export const roundStatus = (round: ClockEvent[], now: number): RoundStatus => {
     }
     if (openPause) stopped += end - openPause.at;
 
-    const hiderMs = Math.max(0, end - start.at - stopped);
+    // Tiempo de juego sin pausas ni Move; el del escondido empieza a contar
+    // cuando acaba el tiempo para esconderse (como en el programa).
+    const activeMs = Math.max(0, end - start.at - stopped);
     const hidingMs = start.hidingMinutes * MIN;
+    const hiderMs = Math.max(0, activeMs - hidingMs);
 
     let phase: ClockPhase;
     let remainingMs: number | null = null;
@@ -89,9 +93,9 @@ export const roundStatus = (round: ClockEvent[], now: number): RoundStatus => {
     else if (now < moveUntil) {
         phase = "move";
         remainingMs = moveUntil - now;
-    } else if (hiderMs < hidingMs) {
+    } else if (activeMs < hidingMs) {
         phase = "escondiendose";
-        remainingMs = hidingMs - hiderMs;
+        remainingMs = hidingMs - activeMs;
     } else phase = "buscando";
 
     return {

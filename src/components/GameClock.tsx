@@ -241,8 +241,9 @@ export const GameClock = () => {
                     <DialogContent className="max-h-[90vh] overflow-y-auto">
                         <DialogTitle>Reloj de partida</DialogTitle>
                         <DialogDescription>
-                            El tiempo del escondido cuenta desde que empieza la
-                            ronda y se para en pausas, descansos y Move.
+                            El tiempo del escondido empieza a contar cuando
+                            acaba el tiempo para esconderse y se para en pausas,
+                            descansos y Move.
                         </DialogDescription>
 
                         {current && (

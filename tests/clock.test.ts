@@ -20,10 +20,11 @@ describe("reloj de partida", () => {
         const s1 = roundStatus(round, at(20));
         expect(s1.phase).toBe("escondiendose");
         expect(s1.remainingMs).toBe(40 * MIN);
-        expect(s1.hiderMs).toBe(20 * MIN);
+        // El tiempo de esconderse no cuenta para el escondido.
+        expect(s1.hiderMs).toBe(0);
         const s2 = roundStatus(round, at(90));
         expect(s2.phase).toBe("buscando");
-        expect(s2.hiderMs).toBe(90 * MIN);
+        expect(s2.hiderMs).toBe(30 * MIN);
     });
 
     it("las pausas paran el tiempo (también el de esconderse)", () => {
@@ -33,10 +34,10 @@ describe("reloj de partida", () => {
             { t: "resume", at: at(45) },
         ];
         expect(roundStatus(r, at(40)).phase).toBe("pausa");
-        expect(roundStatus(r, at(40)).hiderMs).toBe(30 * MIN);
+        expect(roundStatus(r, at(40)).hiderMs).toBe(0);
         const after = roundStatus(r, at(60));
         expect(after.phase).toBe("escondiendose");
-        expect(after.hiderMs).toBe(45 * MIN);
+        expect(after.hiderMs).toBe(0);
         expect(after.remainingMs).toBe(15 * MIN);
     });
 
@@ -47,7 +48,7 @@ describe("reloj de partida", () => {
         ];
         const s = roundStatus(r, at(700));
         expect(s.phase).toBe("descanso");
-        expect(s.hiderMs).toBe(100 * MIN);
+        expect(s.hiderMs).toBe(40 * MIN);
     });
 
     it("el Move para el tiempo del escondido mientras dura", () => {
@@ -58,10 +59,10 @@ describe("reloj de partida", () => {
         const during = roundStatus(r, at(150));
         expect(during.phase).toBe("move");
         expect(during.remainingMs).toBe(30 * MIN);
-        expect(during.hiderMs).toBe(120 * MIN);
+        expect(during.hiderMs).toBe(60 * MIN);
         const after = roundStatus(r, at(200));
         expect(after.phase).toBe("buscando");
-        expect(after.hiderMs).toBe(140 * MIN);
+        expect(after.hiderMs).toBe(80 * MIN);
         expect(after.moves).toBe(1);
     });
 
@@ -75,8 +76,8 @@ describe("reloj de partida", () => {
         ];
         const { rounds, current, best } = clockStatus(events, at(520));
         expect(rounds.map((r) => r.finalMs)).toEqual([
-            170 * MIN,
-            200 * MIN,
+            110 * MIN,
+            140 * MIN,
             null,
         ]);
         expect(best?.hider).toBe("Ana");
