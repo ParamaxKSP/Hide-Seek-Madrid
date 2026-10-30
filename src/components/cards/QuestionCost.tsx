@@ -14,6 +14,7 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { roundHistory, roundQuestions } from "@/lib/clock";
 import {
     gameSize,
     isLoading,
@@ -45,15 +46,18 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
     const $gameSize = useStore(gameSize);
+    // Las preguntas de antes de un Move siguen contando para el coste.
+    const $history = useStore(roundHistory);
+    const all = roundQuestions($questions, $history);
     const question = $questions.find((q) => q.key === questionKey);
     if (!question) return null;
 
     const category = categoryOf(question);
     const info = CATEGORY_INFO[category];
     const entry = catalogEntry(catalogIdOf(question));
-    const times = costMultiplier($questions, questionKey);
+    const times = costMultiplier(all, questionKey);
     const vetoed = question.data.vetoed;
-    const left = unaskedEntries($questions, category, $gameSize).length;
+    const left = unaskedEntries(all, category, $gameSize).length;
 
     const cost = vetoed
         ? "Vetada: sin respuesta y sin cartas"
@@ -126,7 +130,7 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
                             <AlertDialogAction
                                 onClick={() => {
                                     const result = randomizeQuestion(
-                                        $questions,
+                                        all,
                                         questionKey,
                                         Math.random,
                                         $gameSize,

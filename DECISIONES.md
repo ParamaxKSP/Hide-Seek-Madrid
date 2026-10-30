@@ -101,6 +101,13 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - **Compartir la partida** (zona y preguntas) también va por enlace con `#`; si no cabe (más de 16.000 caracteres), se descarga como archivo.
 - Pendiente: que las correcciones de sitios hechas en partida viajen con la configuración (cuando exista la función de corregir sitios).
 
+## Ayudas de partida
+
+- **Reloj de partida** (botón en la barra de abajo): rondas con el nombre de quien se esconde, cuenta atrás del tiempo para esconderse (según el tamaño de partida, editable), tiempo del escondido, pausas y descansos, Move y «Encontrado» con los minutos de cartas de tiempo que tenga en la mano. Lista de rondas con el ganador (el tiempo más largo). Avisa (y vibra) al acabar el tiempo para esconderse y el Move. Sobrevive a recargar o cerrar la página.
+- El tiempo del escondido cuenta desde que empieza la ronda (incluido el tiempo para esconderse) y se para en pausas, descansos y Move.
+- **Move:** el escondido dice su estación de antes, que queda marcada en morado en el mapa; las preguntas pasan al historial de la ronda y siguen contando para el coste al repetirlas; el reloj se para lo que dure el Move (por defecto, el tiempo para esconderse; se pone el de la carta). Empezar ronda nueva borra preguntas e historial.
+- **Termómetro con GPS:** «Empezar aquí» marca el inicio en tu posición, sigue la distancia recorrida en línea recta y avisa (con vibración) al llegar a la distancia de la pregunta; «Terminar aquí» marca el final. Los fallos pasajeros del GPS no cortan el seguimiento.
+
 ## Exclusiones del mapa
 
 - **No** se excluye el aeropuerto: su zona pública es un escondite válido.

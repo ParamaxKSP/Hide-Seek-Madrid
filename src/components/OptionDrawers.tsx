@@ -49,6 +49,7 @@ import { OVERPASS_HOSTS } from "@/maps/api/constants";
 import { questionsSchema } from "@/maps/schema";
 
 import { ConfigDialog } from "./ConfigDialog";
+import { GameClock } from "./GameClock";
 import { LatitudeLongitude } from "./LatLngPicker";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -305,6 +306,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     e.target.value = "";
                 }}
             />
+            <GameClock />
             <ConfigDialog />
             <Button
                 className="shadow-md"

@@ -23,6 +23,7 @@ import { arcDistance } from "@/maps/geo-utils";
 import type { ThermometerQuestion } from "@/maps/schema";
 
 import { QuestionCard } from "./base";
+import { ThermometerHelper } from "./ThermometerHelper";
 
 export const ThermometerQuestionComponent = ({
     data,
@@ -151,6 +152,11 @@ export const ThermometerQuestionComponent = ({
                     disabled={!data.drag || $isLoading}
                 />
             </SidebarMenuItem>
+
+            <ThermometerHelper
+                data={data}
+                disabled={!data.drag || $isLoading}
+            />
 
             {distanceValue !== null && (
                 <div

@@ -9,6 +9,7 @@ import { useEffect, useMemo } from "react";
 import { MapContainer, ScaleControl, TileLayer } from "react-leaflet";
 import { toast } from "react-toastify";
 
+import { roundHistory } from "@/lib/clock";
 import {
     additionalMapGeoLocations,
     addQuestion,
@@ -130,6 +131,7 @@ export const Map = ({ className }: { className?: string }) => {
     const $permanentOverlay = useStore(permanentOverlay);
     const $showTransitLines = useStore(showTransitLines);
     const $disabledLines = useStore(disabledLines);
+    const $roundHistory = useStore(roundHistory);
     const map = useStore(leafletMapContext);
 
     const followMeMarkerRef = useMemo(
@@ -584,6 +586,30 @@ export const Map = ({ className }: { className?: string }) => {
             map.removeLayer(group);
         };
     }, [map, $showTransitLines, $disabledLines]);
+
+    // Estaciones reveladas al hacer Move en esta ronda.
+    useEffect(() => {
+        if (!map) return;
+        const group = L.layerGroup();
+        $roundHistory.forEach((move, i) => {
+            if (!move.station) return;
+            L.circleMarker([move.station.lat, move.station.lng], {
+                radius: 9,
+                color: "#7c3aed",
+                weight: 3,
+                fillColor: "#c4b5fd",
+                fillOpacity: 0.9,
+            })
+                .bindTooltip(
+                    `Move ${i + 1}: el escondido estaba en ${move.station.name}`,
+                )
+                .addTo(group);
+        });
+        group.addTo(map);
+        return () => {
+            map.removeLayer(group);
+        };
+    }, [map, $roundHistory]);
 
     return displayMap;
 };
