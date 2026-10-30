@@ -36,6 +36,7 @@ import {
 } from "@/maps/schema";
 
 import { QuestionCard } from "./base";
+import { TrainLineSelect } from "./TrainLineSelect";
 
 export const MatchingQuestionComponent = ({
     data,
@@ -118,12 +119,15 @@ export const MatchingQuestionComponent = ({
             break;
         case "same-train-line":
             questionSpecific = (
-                <span className="px-2 text-center text-orange-500">
-                    Warning: The train line data is based on OpenStreetMap and
-                    may have fewer train stations than expected. If you are
-                    using this tool, ensure that the other players are also
-                    using this tool.
-                </span>
+                <TrainLineSelect
+                    lat={data.lat}
+                    lng={data.lng}
+                    value={data.trainLine}
+                    disabled={!data.drag || $isLoading}
+                    onChange={(line) =>
+                        questionModified((data.trainLine = line))
+                    }
+                />
             );
             break;
         case "aquarium":

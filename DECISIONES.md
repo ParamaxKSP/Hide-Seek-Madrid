@@ -43,6 +43,17 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 **Descartado por ahora**
 - Compartir la partida en tiempo real entre móviles (se usa Google Maps para compartir ubicación).
 
+## Líneas de transporte
+
+- **Metro de Madrid:** líneas y paradas de OpenStreetMap (el GTFS oficial publicado es de 2025 y no incluye la línea 3). Colores oficiales del Consorcio. Toda la red supera 1 tren/hora.
+- **Metro Ligero:** GTFS oficial del Consorcio.
+- **Cercanías:** GTFS oficial de Renfe (núcleo de Madrid).
+- Frecuencias calculadas para el viernes 30/10/2026 entre las 6:00 y las 18:00: una estación queda fuera si en alguna franja horaria no pasa ningún tren de ninguna de sus líneas (Zarzalejo, Robledo de Chavela, Santa María de la Alameda y Puerto de Navacerrada).
+- Las estaciones fuera de la Comunidad (p. ej. Guadalajara) no existen en el mapa.
+- **¿Misma línea?:** los buscadores eligen en qué línea van; cuentan todas las estaciones en las que para algún tren de esa línea. La app avisa cuando la línea tiene trenes que pasan sin parar por alguna estación.
+- Se pueden quitar líneas enteras como zonas de escondite: una estación desaparece cuando todas sus líneas están quitadas.
+- Para regenerar: `python3 -I scripts/gtfs_to_transit.py …` y después `node scripts/build-madrid-data.mjs`.
+
 ## Exclusiones del mapa
 
 - **No** se excluye el aeropuerto: su zona pública es un escondite válido.

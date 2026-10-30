@@ -22,6 +22,7 @@ import {
     LOCATION_FIRST_TAG,
     nearestToQuestion,
     prettifyLocation,
+    stripAccents,
     trainLineNodeFinder,
 } from "@/maps/api";
 import { holedMask, modifyMapData, safeUnion } from "@/maps/geo-utils";
@@ -340,6 +341,7 @@ export const hiderifyMatching = async (question: MatchingQuestion) => {
         if (question.type === "same-train-line") {
             const nodes = await trainLineNodeFinder(
                 nearestSeekerTrainStation.properties.id,
+                question.trainLine,
             );
 
             const hiderId = parseInt(
@@ -366,8 +368,8 @@ export const hiderifyMatching = async (question: MatchingQuestion) => {
 
         if (question.type === "same-first-letter-station") {
             if (
-                hiderEnglishName[0].toUpperCase() ===
-                seekerEnglishName[0].toUpperCase()
+                stripAccents(hiderEnglishName)[0].toUpperCase() ===
+                stripAccents(seekerEnglishName)[0].toUpperCase()
             ) {
                 question.same = true;
             } else {

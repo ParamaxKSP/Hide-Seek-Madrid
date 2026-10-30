@@ -301,6 +301,8 @@ const hidingZoneMatchingQuestionsSchema = baseMatchingQuestionSchema.extend({
             .literal("same-train-line")
             .describe("Station On Same Train Line Question"),
     ]),
+    /** Línea del tren en el que van los buscadores (vacío: todas las de la estación). */
+    trainLine: z.string().optional(),
 });
 
 const customMatchingQuestionSchema = baseMatchingQuestionSchema.extend({

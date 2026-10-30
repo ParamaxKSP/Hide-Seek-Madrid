@@ -35,7 +35,22 @@ type AdminFeature = Feature<
     { name: string; admin_level: string; id: string }
 >;
 
+export interface TransitLine {
+    id: string;
+    system: "metro" | "ligero" | "cercanias";
+    name: string;
+    color: string;
+    textColor: string;
+    /** Ids de las estaciones (nodos) en las que para la línea. */
+    stations: number[];
+    /** Estaciones por las que pasan algunos trenes de la línea sin parar. */
+    skipped: number[];
+    /** Trazados como listas de [lat, lon]. */
+    shapes: [number, number][][];
+}
+
 interface MadridData {
+    transit: { date: string; hours: [number, number]; lines: TransitLine[] };
     comunidad: AdminFeature;
     admin: FeatureCollection<
         Polygon | MultiPolygon,
@@ -322,4 +337,63 @@ export const localAround = async (
                 }) <= radiusMeters,
         ),
     };
+};
+
+// --- Líneas de Metro, Metro Ligero y Cercanías ---------------------------
+
+export const SYSTEM_NAMES: Record<TransitLine["system"], string> = {
+    metro: "Metro",
+    ligero: "Metro Ligero",
+    cercanias: "Cercanías",
+};
+
+export const loadTransitLines = async () =>
+    (await loadMadridData()).transit.lines;
+
+/** Líneas que paran en una estación (según su id «node/123»). */
+export const linesAtStation = async (stationId: string) => {
+    const id = Number(stationId.split("/")[1]);
+    return (await loadTransitLines()).filter((l) => l.stations.includes(id));
+};
+
+/** Estación (con líneas) más cercana a un punto. */
+export const nearestTransitStation = async (lat: number, lng: number) => {
+    const d = await loadMadridData();
+    const pt = turf.point([lng, lat]);
+    let best: LocalElement | null = null;
+    let bestDist = Infinity;
+    for (const e of d.elements) {
+        if (e.type !== "node" || !e.tags["jlm:lines"]) continue;
+        const dist = turf.distance(pt, turf.point([e.lon, e.lat]));
+        if (dist < bestDist) {
+            best = e;
+            bestDist = dist;
+        }
+    }
+    return best;
+};
+
+/**
+ * Estaciones de las líneas que pasan por `stationId`. Si se indica `lineId`,
+ * solo las de esa línea (la del tren en el que van los buscadores).
+ */
+export const localTrainLineStations = async (
+    stationId: string,
+    lineId?: string,
+) => {
+    const lines = (await linesAtStation(stationId)).filter(
+        (l) => !lineId || l.id === lineId,
+    );
+    return [...new Set(lines.flatMap((l) => l.stations))];
+};
+
+/** Una estación está desactivada si lo está ella o todas sus líneas. */
+export const isStationDisabled = (
+    props: Record<string, any>,
+    disabledStations: string[],
+    disabledLines: string[],
+) => {
+    if (disabledStations.includes(props.id)) return true;
+    const lines = (props["jlm:lines"] as string | undefined)?.split(";");
+    return !!lines && lines.every((l) => disabledLines.includes(l));
 };

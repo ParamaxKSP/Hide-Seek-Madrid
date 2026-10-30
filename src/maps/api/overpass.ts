@@ -21,6 +21,7 @@ import {
     localAround,
     localFindPlaces,
     localMadridBoundary,
+    localTrainLineStations,
     MADRID_OSM_ID,
 } from "./local";
 import type {
@@ -202,7 +203,14 @@ export const fetchCoastline = async () => {
     return data;
 };
 
-export const trainLineNodeFinder = async (node: string): Promise<number[]> => {
+export const trainLineNodeFinder = async (
+    node: string,
+    line?: string,
+): Promise<number[]> => {
+    if (isLocalQuery([])) {
+        // Líneas oficiales (GTFS) incluidas en la app.
+        return localTrainLineStations(node, line);
+    }
     const nodeId = node.split("/")[1];
     const tagQuery = `
 [out:json];

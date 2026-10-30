@@ -149,4 +149,52 @@ describe("datos locales de Madrid", async () => {
         } as any);
         expect(nearest.properties.name).toBe("Zoo Aquarium de Madrid");
     });
+
+    it("conoce las líneas oficiales y sus estaciones", async () => {
+        const lines = await local.loadTransitLines();
+        const ids = lines.map((l) => l.id);
+        for (const id of ["L1", "L3", "L12", "LR", "ML1", "C-1", "C-4a", "C-9"])
+            expect(ids).toContain(id);
+        const sol = await local.nearestTransitStation(40.41692, -3.70348);
+        expect(sol?.tags.name).toBe("Sol");
+        const atSol = (await local.linesAtStation(`node/${sol!.id}`)).map(
+            (l) => l.id,
+        );
+        expect(atSol).toEqual(expect.arrayContaining(["L1", "L2", "L3"]));
+    });
+
+    it("responde «¿misma línea?» con la línea elegida", async () => {
+        const all = await local.loadMadridData();
+        const named = (n: string, sys: string) =>
+            all.elements.find(
+                (e) => e.tags.name === n && e.tags["jlm:system"] === sys,
+            )!;
+        const sol = named("Sol", "metro");
+        const valdecarros = named("Valdecarros", "metro");
+        const moncloa = named("Moncloa", "metro");
+        const l1 = await api.trainLineNodeFinder(`node/${sol.id}`, "L1");
+        expect(l1).toContain(valdecarros.id);
+        expect(l1).not.toContain(moncloa.id);
+        const any = await api.trainLineNodeFinder(`node/${sol.id}`);
+        expect(any).toContain(moncloa.id);
+    });
+
+    it("desactiva una estación solo si todas sus líneas están desactivadas", () => {
+        const props = { id: "node/1", "jlm:lines": "L1;L2" };
+        expect(local.isStationDisabled(props, [], ["L1"])).toBe(false);
+        expect(local.isStationDisabled(props, [], ["L1", "L2"])).toBe(true);
+        expect(local.isStationDisabled(props, ["node/1"], [])).toBe(true);
+    });
+
+    it("deja fuera las estaciones con menos de 1 tren por hora", async () => {
+        const d = await local.loadMadridData();
+        const excluded = d.elements
+            .filter((e) => e.tags["jlm:excluded"])
+            .map((e) => e.tags.name);
+        expect(excluded).toContain("Zarzalejo");
+        const stations = await api.findPlacesInZone("[railway=station]");
+        expect(stations.elements.map((e: any) => e.tags.name)).not.toContain(
+            "Zarzalejo",
+        );
+    });
 });

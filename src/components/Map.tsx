@@ -15,6 +15,7 @@ import {
     animateMapMovements,
     autoZoom,
     baseTileLayer,
+    disabledLines,
     followMe,
     hiderMode,
     isLoading,
@@ -26,6 +27,7 @@ import {
     polyGeoJSON,
     questionFinishedMapData,
     questions,
+    showTransitLines,
     thunderforestApiKey,
     triggerLocalRefresh,
 } from "@/lib/context";
@@ -33,6 +35,7 @@ import { cn } from "@/lib/utils";
 import { applyQuestionsToMapGeoData, holedMask } from "@/maps";
 import { hiderifyQuestion } from "@/maps";
 import { clearCache, determineMapBoundaries } from "@/maps/api";
+import { loadTransitLines } from "@/maps/api/local";
 
 import { DraggableMarkers } from "./DraggableMarkers";
 import { LeafletFullScreenButton } from "./LeafletFullScreenButton";
@@ -125,6 +128,8 @@ export const Map = ({ className }: { className?: string }) => {
     const $isLoading = useStore(isLoading);
     const $followMe = useStore(followMe);
     const $permanentOverlay = useStore(permanentOverlay);
+    const $showTransitLines = useStore(showTransitLines);
+    const $disabledLines = useStore(disabledLines);
     const map = useStore(leafletMapContext);
 
     const followMeMarkerRef = useMemo(
@@ -530,6 +535,55 @@ export const Map = ({ className }: { className?: string }) => {
             toast.error(`Failed to display GeoJSON overlay: ${e}`);
         }
     }, [$permanentOverlay, map]);
+
+    // Líneas de Metro, Metro Ligero y Cercanías, bajo las zonas y las preguntas.
+    useEffect(() => {
+        if (!map) return;
+        if (!map.getPane("transitLines")) {
+            const pane = map.createPane("transitLines");
+            pane.style.zIndex = "350";
+            pane.style.pointerEvents = "none";
+        }
+        const group = L.layerGroup();
+        let cancelled = false;
+        if ($showTransitLines) {
+            loadTransitLines()
+                .then((lines) => {
+                    if (cancelled) return;
+                    // Cercanías debajo, luego Metro Ligero y Metro encima.
+                    const order = { cercanias: 0, ligero: 1, metro: 2 };
+                    [...lines]
+                        .sort((a, b) => order[a.system] - order[b.system])
+                        .forEach((line) => {
+                            const off = $disabledLines.includes(line.id);
+                            const color =
+                                line.color === "#FFFFFF"
+                                    ? line.textColor
+                                    : line.color;
+                            line.shapes.forEach((shape) =>
+                                L.polyline(shape, {
+                                    pane: "transitLines",
+                                    color,
+                                    weight: line.system === "cercanias" ? 4 : 3,
+                                    opacity: off ? 0.2 : 0.85,
+                                    dashArray: off ? "4 6" : undefined,
+                                    interactive: false,
+                                }).addTo(group),
+                            );
+                        });
+                    group.addTo(map);
+                })
+                .catch(() => {
+                    toast.error("No se han podido cargar las líneas.", {
+                        toastId: "transit-lines-error",
+                    });
+                });
+        }
+        return () => {
+            cancelled = true;
+            map.removeLayer(group);
+        };
+    }, [map, $showTransitLines, $disabledLines]);
 
     return displayMap;
 };

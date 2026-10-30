@@ -206,6 +206,20 @@ export const hidingRadiusUnits = persistentAtom<Units>(
         decode: JSON.parse,
     },
 );
+/** Líneas desactivadas como zonas de escondite (p. ej. "C-9"). */
+export const disabledLines = persistentAtom<string[]>("disabledLines", [], {
+    encode: JSON.stringify,
+    decode: JSON.parse,
+});
+/** Dibujar las líneas de Metro, Metro Ligero y Cercanías sobre el mapa. */
+export const showTransitLines = persistentAtom<boolean>(
+    "showTransitLines",
+    true,
+    {
+        encode: JSON.stringify,
+        decode: JSON.parse,
+    },
+);
 export const disabledStations = persistentAtom<string[]>(
     "disabledStations",
     [],

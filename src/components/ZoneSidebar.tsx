@@ -21,6 +21,7 @@ import {
     animateMapMovements,
     autoZoom,
     customStations as customStationsAtom,
+    disabledLines,
     disabledStations,
     displayHidingZones,
     displayHidingZonesOptions,
@@ -43,12 +44,14 @@ import {
     findPlacesInZone,
     findPlacesSpecificInZone,
     findTentacleLocations,
+    isStationDisabled,
     nearestToQuestion,
     normalizeToStationFeatures,
     parseCustomStationsFromText,
     QuestionSpecificLocation,
     type StationCircle,
     type StationPlace,
+    stripAccents,
     trainLineNodeFinder,
 } from "@/maps/api";
 import {
@@ -62,6 +65,7 @@ import {
     safeUnion,
 } from "@/maps/geo-utils";
 
+import { TransitLinesPanel } from "./TransitLinesPanel";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
 import {
@@ -96,6 +100,7 @@ export const ZoneSidebar = () => {
     const map = useStore(leafletMapContext);
     const stations = useStore(trainStations);
     const $disabledStations = useStore(disabledStations);
+    const $disabledLines = useStore(disabledLines);
     const useCustomStations = useStore(useCustomStationsAtom);
     const mergeDuplicates = useStore(mergeDuplicatesAtom);
     const includeDefaultStations = useStore(includeDefaultStationsAtom);
@@ -324,7 +329,11 @@ export const ZoneSidebar = () => {
                                 continue;
                             }
 
-                            const nodes = await trainLineNodeFinder(nid);
+                            const nodes = await trainLineNodeFinder(
+                                nid,
+                                (question.data as { trainLine?: string })
+                                    .trainLine,
+                            );
 
                             if (nodes.length === 0) {
                                 toast.warning(
@@ -355,15 +364,18 @@ export const ZoneSidebar = () => {
                         return toast.error("No English name found");
 
                     if (question.data.type === "same-first-letter-station") {
-                        const letter = englishName[0].toUpperCase();
+                        // Sin tildes: «Ávila» y «Alcalá» empiezan por la misma letra.
+                        const letter =
+                            stripAccents(englishName)[0].toUpperCase();
 
                         circles = circles.filter((circle) => {
                             const name = extractStationName(circle.properties);
                             if (!name) return false;
 
+                            const first = stripAccents(name)[0].toUpperCase();
                             return question.data.same
-                                ? name[0].toUpperCase() === letter
-                                : name[0].toUpperCase() !== letter;
+                                ? first === letter
+                                : first !== letter;
                         });
                     } else if (question.data.type === "same-length-station") {
                         const seekerLength = englishName.length;
@@ -487,7 +499,12 @@ export const ZoneSidebar = () => {
             }
         } else if ($displayHidingZones) {
             const activeStations = stations.filter(
-                (x) => !$disabledStations.includes(x.properties.properties.id),
+                (x) =>
+                    !isStationDisabled(
+                        x.properties.properties,
+                        $disabledStations,
+                        $disabledLines,
+                    ),
             );
             showGeoJSON(
                 styleStations(activeStations, $displayHidingZonesStyle),
@@ -498,6 +515,7 @@ export const ZoneSidebar = () => {
         }
     }, [
         $disabledStations,
+        $disabledLines,
         $displayHidingZones,
         $displayHidingZonesStyle,
         $hidingRadius,
@@ -956,6 +974,7 @@ export const ZoneSidebar = () => {
                                     })()}
                                 </SidebarMenuItem>
                             )}
+                            {$displayHidingZones && <TransitLinesPanel />}
                             {$displayHidingZones &&
                                 $disabledStations.length > 0 && (
                                     <SidebarMenuItem
@@ -1015,9 +1034,11 @@ export const ZoneSidebar = () => {
                                                             .properties.id
                                                     }
                                                     className={cn(
-                                                        $disabledStations.includes(
+                                                        isStationDisabled(
                                                             station.properties
-                                                                .properties.id,
+                                                                .properties,
+                                                            $disabledStations,
+                                                            $disabledLines,
                                                         ) && "line-through",
                                                     )}
                                                     onSelect={async () => {

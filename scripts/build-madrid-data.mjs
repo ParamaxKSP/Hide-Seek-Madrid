@@ -177,41 +177,84 @@ counts.rivers = base.rivers.length;
 for (const g of base.highspeed[0].lines)
     if (g.length > 1) way(g, { railway: "rail", highspeed: "yes" });
 
-// Estaciones (zonas de escondite).
-const KEEP = [
-    "name",
-    "railway",
-    "station",
-    "subway",
-    "light_rail",
-    "train",
-    "tram",
-    "public_transport",
-    "network",
-    "operator",
-];
+// Estaciones (zonas de escondite) a partir de los datos oficiales de líneas
+// (scripts/gtfs_to_transit.py). Solo las que están dentro de la Comunidad.
+const transit = read("transit.json");
+const MIN_TRAINS_PER_HOUR = 1;
+const SYSTEM_TAGS = {
+    metro: {
+        railway: "station",
+        station: "subway",
+        subway: "yes",
+        network: "Metro de Madrid",
+    },
+    ligero: {
+        railway: "station",
+        station: "light_rail",
+        light_rail: "yes",
+        network: "Metro Ligero de Madrid",
+    },
+    cercanias: {
+        railway: "station",
+        train: "yes",
+        network: "Cercanías Madrid",
+    },
+};
+let syntheticStation = 7_000_000_000;
+const lowFrequency = [];
+const stationsPerLine = {};
+const skippedPerLine = {};
 let nStations = 0;
-for (const e of read("stations_raw.json").elements) {
-    const t = e.tags ?? {};
-    const isStation =
-        ["station", "halt", "tram_stop"].includes(t.railway) ||
-        (!t.railway && t.public_transport === "station");
-    if (!isStation || !t.name) continue;
-    const tags = Object.fromEntries(
-        Object.entries(t).filter(([k]) => KEEP.includes(k)),
+for (const s of transit.stations) {
+    if (!turf.booleanPointInPolygon(turf.point([s.lon, s.lat]), comunidadRaw))
+        continue;
+    const lines = Object.keys(s.lines).sort();
+    // Metro no tiene horarios por parada (min = null): toda la red supera 1 tren/hora.
+    const frequent = lines.filter(
+        (l) => s.lines[l].min === null || s.lines[l].min >= MIN_TRAINS_PER_HOUR,
     );
-    // Para comparar iniciales y longitudes sin que cuenten las tildes.
-    tags["name:en"] = t.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-    elements.push({
-        type: "node",
-        id: e.id,
-        lat: r5(e.lat),
-        lon: r5(e.lon),
-        tags,
-    });
+    const tags = {
+        ...SYSTEM_TAGS[s.system],
+        name: s.name,
+        "jlm:system": s.system,
+        "jlm:lines": lines.join(";"),
+    };
+    const partial = lines.filter((l) => s.lines[l].partial);
+    if (partial.length) tags["jlm:partial"] = partial.join(";");
+    if (frequent.length === 0) {
+        // Regla de casa: fuera las estaciones con menos de 1 tren/hora en alguna franja.
+        delete tags.railway;
+        tags["jlm:excluded"] = "baja frecuencia";
+        lowFrequency.push(s.name);
+    }
+    const id = s.osm ?? syntheticStation++;
+    elements.push({ type: "node", id, lat: r5(s.lat), lon: r5(s.lon), tags });
+    for (const l of lines) (stationsPerLine[l] ??= []).push(id);
+    for (const l of partial) (skippedPerLine[l] ??= []).push(id);
     nStations++;
 }
 counts.stations = nStations;
+counts.bajaFrecuencia = lowFrequency.join(", ");
+
+const natural = new Intl.Collator("es", { numeric: true }).compare;
+const SYSTEM_ORDER = { metro: 0, ligero: 1, cercanias: 2 };
+const transitLines = transit.lines
+    .filter((l) => stationsPerLine[l.id])
+    .sort(
+        (a, b) =>
+            SYSTEM_ORDER[a.system] - SYSTEM_ORDER[b.system] ||
+            natural(a.id, b.id),
+    )
+    .map((l) => ({
+        id: l.id,
+        system: l.system,
+        name: l.name,
+        color: l.color,
+        textColor: l.textColor,
+        stations: stationsPerLine[l.id],
+        skipped: skippedPerLine[l.id] ?? [],
+        shapes: l.shapes,
+    }));
 
 const out = {
     version: 1,
@@ -220,6 +263,7 @@ const out = {
         "© colaboradores de OpenStreetMap (ODbL). Revisado a mano para Hide-Seek-Madrid.",
     comunidad,
     admin: turf.featureCollection([...municipios, ...distritos]),
+    transit: { date: transit.date, hours: transit.hours, lines: transitLines },
     elements,
 };
 fs.mkdirSync(new URL("../public/data/", import.meta.url), { recursive: true });
