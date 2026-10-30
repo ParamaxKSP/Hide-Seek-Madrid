@@ -399,16 +399,16 @@ export const isStationDisabled = (
 };
 
 /**
- * Zona posible tras «¿Misma línea?»: círculos de escondite alrededor de las
- * estaciones de la línea (si la respuesta es sí) o de todas las demás (si es no).
- * La línea es la elegida por los buscadores o, si no eligen, cualquiera de las
- * que paran en la estación más cercana a la pregunta.
+ * Zonas de «¿Misma línea?». La línea es la elegida por los buscadores o, si no
+ * eligen, cualquiera de las que paran en la estación más cercana a la pregunta.
+ *
+ * - `line`: círculos de escondite de las estaciones de esa línea.
+ * - `others`: círculos de escondite del resto de estaciones.
  */
-export const sameLineZone = async (
+export const sameLineCircles = async (
     lat: number,
     lng: number,
     lineId: string | undefined,
-    same: boolean,
     radius: number,
     units: turf.Units,
 ) => {
@@ -418,14 +418,51 @@ export const sameLineZone = async (
         await localTrainLineStations(`node/${station.id}`, lineId),
     );
     const d = await loadMadridData();
-    const circles = d.elements
-        .filter(
-            (e): e is Extract<LocalElement, { type: "node" }> =>
-                e.type === "node" &&
-                e.tags.railway === "station" &&
-                !!e.tags["jlm:lines"] &&
-                lineStations.has(e.id) === same,
+    const line: Feature<Polygon>[] = [];
+    const others: Feature<Polygon>[] = [];
+    for (const e of d.elements) {
+        if (
+            e.type !== "node" ||
+            e.tags.railway !== "station" ||
+            !e.tags["jlm:lines"]
         )
-        .map((e) => turf.circle([e.lon, e.lat], radius, { units, steps: 32 }));
-    return circles.length ? turf.featureCollection(circles) : null;
+            continue;
+        const c = turf.circle([e.lon, e.lat], radius, { units, steps: 32 });
+        (lineStations.has(e.id) ? line : others).push(c);
+    }
+    return {
+        line: turf.featureCollection(line),
+        others: turf.featureCollection(others),
+    };
+};
+
+export interface SameLineEffect {
+    /** keep: quedarse dentro de `zone`; remove: quitar `zone` del mapa. */
+    mode: "keep" | "remove";
+    zone: Feature<Polygon | MultiPolygon>;
+}
+
+/**
+ * Lo que la respuesta de «¿Misma línea?» deja fuera del mapa:
+ * - sí: todo lo que no esté en una zona de escondite de la línea;
+ * - no: solo las zonas de escondite de la línea, menos las partes que se solapan
+ *   con la zona de otra estación (el escondido podría estar escondido en esa otra).
+ */
+export const sameLineZone = async (
+    lat: number,
+    lng: number,
+    lineId: string | undefined,
+    same: boolean,
+    radius: number,
+    units: turf.Units,
+) => {
+    const circles = await sameLineCircles(lat, lng, lineId, radius, units);
+    if (!circles || circles.line.features.length === 0) return null;
+    const line = turf.union(circles.line) ?? circles.line.features[0];
+    if (same) return { mode: "keep", zone: line } as SameLineEffect;
+    if (circles.others.features.length === 0)
+        return { mode: "remove", zone: line } as SameLineEffect;
+    const others = turf.union(circles.others) ?? circles.others.features[0];
+    const remove = turf.difference(turf.featureCollection([line, others]));
+    return remove ? ({ mode: "remove", zone: remove } as SameLineEffect) : null;
 };

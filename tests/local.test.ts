@@ -213,12 +213,10 @@ describe("datos locales de Madrid", async () => {
 
     it("dibuja la zona de «¿misma línea?» sin activar las zonas de escondite", async () => {
         const turf = await import("@turf/turf");
-        const inZone = (zone: any, lat: number, lng: number) =>
-            zone.features.some((f: any) =>
-                turf.booleanPointInPolygon(turf.point([lng, lat]), f),
-            );
         const valdecarros: [number, number] = [40.3693, -3.6125];
         const moncloa: [number, number] = [40.4351, -3.7192];
+        const inside = (f: any, lat: number, lng: number) =>
+            turf.booleanPointInPolygon(turf.point([lng, lat]), f);
         const yes = await local.sameLineZone(
             40.41692,
             -3.70348,
@@ -227,8 +225,10 @@ describe("datos locales de Madrid", async () => {
             0.5,
             "kilometers",
         );
-        expect(inZone(yes, ...valdecarros)).toBe(true);
-        expect(inZone(yes, ...moncloa)).toBe(false);
+        expect(yes?.mode).toBe("keep");
+        const keep = yes!.zone;
+        expect(inside(keep, ...valdecarros)).toBe(true);
+        expect(inside(keep, ...moncloa)).toBe(false);
         const no = await local.sameLineZone(
             40.41692,
             -3.70348,
@@ -237,6 +237,12 @@ describe("datos locales de Madrid", async () => {
             0.5,
             "kilometers",
         );
-        expect(inZone(no, ...moncloa)).toBe(true);
+        expect(no?.mode).toBe("remove");
+        const remove = no!.zone;
+        // Con «no» solo se quitan las zonas de la L1; Moncloa sigue posible.
+        expect(inside(remove, ...valdecarros)).toBe(true);
+        expect(inside(remove, ...moncloa)).toBe(false);
+        // Sol también es de L2 y L3: su zona se solapa con otras estaciones y no se quita entera.
+        expect(inside(remove, 40.41692, -3.70348)).toBe(false);
     });
 });

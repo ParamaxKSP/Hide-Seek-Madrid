@@ -260,19 +260,17 @@ export const determineMatchingBoundary = _.memoize(
         }),
 );
 
-/** Zona posible de «¿Misma línea?» (ver sameLineZone). */
+/** Efecto de «¿Misma línea?» en el mapa (ver sameLineZone). */
 export const determineSameLineZone = _.memoize(
-    async (question: MatchingQuestion) => {
-        const zone = await sameLineZone(
+    (question: MatchingQuestion) =>
+        sameLineZone(
             question.lat,
             question.lng,
             (question as { trainLine?: string }).trainLine,
             question.same,
             hidingRadius.get(),
             hidingRadiusUnits.get(),
-        );
-        return zone ? safeUnion(zone) : null;
-    },
+        ),
     (question: MatchingQuestion) =>
         JSON.stringify({
             lat: question.lat,
@@ -292,8 +290,9 @@ export const adjustPerMatching = async (
 
     if (question.type === "same-train-line") {
         const zone = await determineSameLineZone(question);
-        // La zona ya es «donde puede estar el escondido», sea sí o no.
-        return zone ? modifyMapData(mapData, zone, true) : mapData;
+        if (!zone) return mapData;
+        // Sí: quedarse dentro de las zonas de la línea. No: quitar solo esas zonas.
+        return modifyMapData(mapData, zone.zone, zone.mode === "keep");
     }
 
     const boundary = await determineMatchingBoundary(question);
@@ -451,10 +450,13 @@ export const hiderifyMatching = async (question: MatchingQuestion) => {
 
 export const matchingPlanningPolygon = async (question: MatchingQuestion) => {
     try {
-        const boundary =
-            question.type === "same-train-line"
-                ? await determineSameLineZone(question)
-                : await determineMatchingBoundary(question);
+        let boundary;
+        if (question.type === "same-train-line") {
+            const zone = await determineSameLineZone(question);
+            boundary = zone?.zone;
+        } else {
+            boundary = await determineMatchingBoundary(question);
+        }
         if (!boundary) return false;
 
         if (boundary === false) {
