@@ -117,7 +117,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 ## Sin conexión y sin terceros
 
 - El módulo de geometría de ArcGIS (pe-wasm) lo sirve la propia web: se copia de `node_modules` al compilar (`scripts/copy-arcgis-assets.mjs`) y ya no se pide nada a js.arcgis.com.
-- El service worker ahora sí se registra (antes no se cargaba nunca): guarda la app, los datos de Madrid y el módulo de geometría, así que con la web abierta una vez se puede jugar sin cobertura. Las versiones nuevas se instalan solas al volver a abrirla.
+- El service worker ahora sí se registra (antes no se cargaba nunca): guarda la app, los datos de Madrid y el módulo de geometría, así que con la web abierta una vez se puede jugar sin cobertura. Cuando hay una versión nueva sale un aviso arriba para recargar (la app busca versiones al volver a ella y cada 30 min).
 - El fondo del mapa (CARTO/OpenStreetMap) sigue viniendo de fuera; se guardan las teselas ya vistas (hasta 4000, 60 días) para que se vean sin conexión.
 
 ## Preguntas según el tamaño de partida
