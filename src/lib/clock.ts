@@ -17,7 +17,16 @@ export type ClockEvent =
     | { t: "pause"; at: number; reason: "pausa" | "descanso" }
     | { t: "resume"; at: number }
     | { t: "move"; at: number; minutes: number; station?: string }
-    | { t: "found"; at: number; bonusMinutes: number };
+    | { t: "found"; at: number; bonusMinutes: number }
+    /** El escondido confirma que los buscadores han llegado a su zona. */
+    | {
+          t: "endgame";
+          at: number;
+          station: string;
+          lat: number;
+          lng: number;
+      }
+    | { t: "endgame-cancel"; at: number };
 
 export type ClockPhase =
     | "sin-empezar"
@@ -140,6 +149,37 @@ export const gameClock = persistentAtom<ClockEvent[]>("gameClock", [], {
         }
     },
 });
+
+export interface EndgameState {
+    station: string;
+    lat: number;
+    lng: number;
+    at: number;
+}
+
+/**
+ * Endgame de la ronda en curso: la estación que ha confirmado el escondido
+ * (null si no hay o se ha cancelado) y si ya se ha usado en esta ronda. Solo
+ * se puede usar una vez por ronda, aunque se cancele.
+ */
+export const roundEndgame = (events: ClockEvent[]) => {
+    const round = splitRounds(events).at(-1) ?? [];
+    const found = round.some((e) => e.t === "found");
+    const start = round.find((e) => e.t === "endgame") as
+        | Extract<ClockEvent, { t: "endgame" }>
+        | undefined;
+    const cancelled = round.some((e) => e.t === "endgame-cancel");
+    const active: EndgameState | null =
+        start && !cancelled && !found
+            ? {
+                  station: start.station,
+                  lat: start.lat,
+                  lng: start.lng,
+                  at: start.at,
+              }
+            : null;
+    return { active, used: !!start, cancelled };
+};
 
 export const addClockEvent = (e: ClockEvent) =>
     gameClock.set([...gameClock.get(), e]);

@@ -10,6 +10,7 @@ import {
     DrawerTrigger,
 } from "@/components/ui/drawer";
 import { t } from "@/i18n";
+import { gameClock, roundHistory } from "@/lib/clock";
 import {
     additionalMapGeoLocations,
     allowGooglePlusCodes,
@@ -213,6 +214,10 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     console.warn("Failed to import presets", err);
                 }
             }
+
+            // Reloj y Move de la ronda (partidas compartidas desde esta versión).
+            if (Array.isArray(geojson.clock)) gameClock.set(geojson.clock);
+            if (Array.isArray(geojson.moves)) roundHistory.set(geojson.moves);
 
             if (
                 geojson.disabledStations !== null &&

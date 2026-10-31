@@ -126,6 +126,12 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - Si una pregunta ya hecha no existe en el tamaño actual, se conserva y se marca «(no existe en este tamaño)».
 - Las variantes del juego original que no se usan en Madrid (7-Eleven, gran ciudad, costa…) ya no salen; las personalizadas van en su propio grupo.
 
+## Endgame
+
+- Botón «Endgame» en el reloj, mientras se busca. Se usa solo cuando el escondido confirma que los buscadores han llegado a su zona: se elige su estación y el mapa queda reducido a la zona de escondite entera de esa estación (aunque alguna pregunta la hubiera recortado); el resto se bloquea.
+- Una sola vez por ronda, aunque se cancele, y queda apuntado en la tabla de rondas. Para que todos lo vean, el reloj y los Move viajan ahora en la partida compartida (enlace o archivo).
+- Termina al encontrar al escondido o al empezar otra ronda.
+
 ## Estaciones en el mapa
 
 - Todas las estaciones de los tipos elegidos se marcan con un punto (nombre al pasar por encima), sin tener que mostrar las zonas de escondite. Se puede quitar en Opciones.

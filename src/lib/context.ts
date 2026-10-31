@@ -3,6 +3,7 @@ import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import type { Map } from "leaflet";
 import { atom, computed, onSet } from "nanostores";
 
+import { gameClock, roundHistory } from "@/lib/clock";
 import type {
     AdditionalMapGeoLocations,
     CustomStation,
@@ -380,6 +381,8 @@ export const hidingZone = computed(
         includeDefaultStations,
         customPresets,
         permanentOverlay,
+        gameClock,
+        roundHistory,
     ],
     (
         q,
@@ -395,6 +398,8 @@ export const hidingZone = computed(
         includeDefault,
         presets,
         $permanentOverlay,
+        $clock,
+        $moves,
     ) => {
         if (geo !== null) {
             return {
@@ -409,6 +414,9 @@ export const hidingZone = computed(
                 includeDefaultStations: includeDefault,
                 presets: structuredClone(presets),
                 permanentOverlay: $permanentOverlay,
+                // Reloj y Move de la ronda: así todos ven lo mismo (también el endgame).
+                clock: $clock,
+                moves: $moves,
             };
         } else {
             const $loc = structuredClone(loc);
@@ -426,6 +434,9 @@ export const hidingZone = computed(
                 includeDefaultStations: includeDefault,
                 presets: structuredClone(presets),
                 permanentOverlay: $permanentOverlay,
+                // Reloj y Move de la ronda: así todos ven lo mismo (también el endgame).
+                clock: $clock,
+                moves: $moves,
             };
         }
     },

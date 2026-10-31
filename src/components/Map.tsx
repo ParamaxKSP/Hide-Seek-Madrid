@@ -11,7 +11,7 @@ import { MapContainer, ScaleControl, TileLayer } from "react-leaflet";
 import { toast } from "react-toastify";
 
 import { t } from "@/i18n";
-import { roundHistory } from "@/lib/clock";
+import { gameClock, roundEndgame, roundHistory } from "@/lib/clock";
 import {
     additionalMapGeoLocations,
     addQuestion,
@@ -25,6 +25,8 @@ import {
     followMe,
     gameSize,
     hiderMode,
+    hidingRadius,
+    hidingRadiusUnits,
     isLoading,
     leafletMapContext,
     mapGeoJSON,
@@ -49,6 +51,7 @@ import {
 } from "@/maps/api";
 import { isStationDisabled, loadTransitLines } from "@/maps/api/local";
 import { categoryAvailable } from "@/maps/catalog";
+import { safeUnion } from "@/maps/geo-utils/operators";
 import { extractStationLabel } from "@/maps/geo-utils/special";
 
 import { DraggableMarkers } from "./DraggableMarkers";
@@ -149,6 +152,9 @@ export const Map = ({ className }: { className?: string }) => {
     const $disabledLines = useStore(disabledLines);
     const $mapGeoJSON = useStore(mapGeoJSON);
     const $roundHistory = useStore(roundHistory);
+    const $gameClock = useStore(gameClock);
+    // Cambia solo al empezar o cancelar un endgame (no cada segundo).
+    const endgameKey = JSON.stringify(roundEndgame($gameClock).active);
     const map = useStore(leafletMapContext);
 
     const followMeMarkerRef = useMemo(
@@ -207,6 +213,9 @@ export const Map = ({ className }: { className?: string }) => {
             }
         });
 
+        // Zona de juego antes de las preguntas (para el endgame).
+        const gameArea = mapGeoData;
+
         try {
             mapGeoData = await applyQuestionsToMapGeoData(
                 $questions,
@@ -219,6 +228,27 @@ export const Map = ({ className }: { className?: string }) => {
                     geoJSONPlane.addTo(map);
                 },
             );
+
+            // Endgame: el escondido ha confirmado su estación. Solo queda su
+            // zona de escondite entera, aunque las preguntas la recortaran.
+            const endgame = roundEndgame(gameClock.get()).active;
+            if (endgame && gameArea) {
+                const circle = turf.circle(
+                    [endgame.lng, endgame.lat],
+                    hidingRadius.get(),
+                    { units: hidingRadiusUnits.get(), steps: 64 },
+                );
+                const whole =
+                    (gameArea as any).type === "FeatureCollection"
+                        ? safeUnion(gameArea as any)
+                        : gameArea;
+                const area = turf.intersect(
+                    turf.featureCollection([circle, whole as any]),
+                );
+                mapGeoData = turf.featureCollection([
+                    (area ?? circle) as any,
+                ]) as any;
+            }
 
             mapGeoData = {
                 type: "FeatureCollection",
@@ -430,7 +460,7 @@ export const Map = ({ className }: { className?: string }) => {
         if (!map) return;
 
         refreshQuestions(true);
-    }, [$questions, map, $hiderMode]);
+    }, [$questions, map, $hiderMode, endgameKey]);
 
     useEffect(() => {
         const intervalId = setInterval(async () => {

@@ -124,6 +124,7 @@ const tutorialSteps: TutorialStep[] = [
         content: paras(
             "El reloj lleva el tiempo de cada ronda: primero el tiempo para esconderse, que no cuenta, y después el del escondido, que se para en pausas, descansos y Move.",
             "Al encontrar al escondido se apuntan las cartas de tiempo que tenga y la tabla dice quién va ganando. Un Move guarda las preguntas hechas hasta ese momento y marca en el mapa dónde estaba el escondido.",
+            "Cuando el escondido confirma que habéis llegado a su zona, «Endgame» deja en el mapa solo la zona de su estación. Se puede usar una vez por ronda y queda apuntado.",
         ),
         targetSelector: '[data-tutorial-id="clock-button"]',
         position: "top",

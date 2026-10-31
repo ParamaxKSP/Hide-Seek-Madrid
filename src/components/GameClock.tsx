@@ -16,8 +16,10 @@ import {
     clockStatus,
     formatDuration,
     gameClock,
+    roundEndgame,
     roundHistory,
     type RoundStatus,
+    splitRounds,
 } from "@/lib/clock";
 import { SIZE_INFO } from "@/lib/config";
 import { gameSize, questions } from "@/lib/context";
@@ -86,6 +88,7 @@ const NumberField = ({
     <label className="flex items-center gap-2 text-sm">
         <span className="flex-1">{label}</span>
         <Input
+            debounce={0}
             className="w-20"
             type="text"
             inputMode="numeric"
@@ -105,12 +108,15 @@ export const GameClock = () => {
     const [now, setNow] = useState(Date.now());
     const [open, setOpen] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const [form, setForm] = useState<null | "round" | "move" | "found">(null);
+    const [form, setForm] = useState<
+        null | "round" | "move" | "found" | "endgame"
+    >(null);
     const [hider, setHider] = useState("");
     const [minutes, setMinutes] = useState("");
     const [station, setStation] = useState("");
     const [bonus, setBonus] = useState("0");
-    const stations = useStations(form === "move");
+    const stations = useStations(form === "move" || form === "endgame");
+    const stationInput = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         setMounted(true);
@@ -177,8 +183,9 @@ export const GameClock = () => {
 
     const doMove = async () => {
         const n = Number(minutes);
+        const typed = stationInput.current?.value ?? station;
         const s = (await stationList()).find(
-            (x) => normalize(x.name) === normalize(station),
+            (x) => normalize(x.name) === normalize(typed),
         );
         roundHistory.set([
             ...roundHistory.get(),
@@ -193,7 +200,7 @@ export const GameClock = () => {
             t: "move",
             at: Date.now(),
             minutes: Number.isFinite(n) && n > 0 ? n : 60,
-            station: s?.name ?? (station.trim() || undefined),
+            station: s?.name ?? (typed.trim() || undefined),
         });
         toast.info(
             "Move: las preguntas pasan al historial (siguen contando para el coste)" +
@@ -217,6 +224,34 @@ export const GameClock = () => {
         vibrate([500]);
     };
 
+    const endgame = useMemo(() => roundEndgame($events), [$events]);
+    const roundEvents = useMemo(() => splitRounds($events), [$events]);
+
+    const startEndgame = async () => {
+        // Se lee del campo: el estado puede no estar al día si se pulsa
+        // justo después de escribir.
+        const typed = stationInput.current?.value ?? station;
+        const s = (await stationList()).find(
+            (x) => normalize(x.name) === normalize(typed),
+        );
+        if (!s) {
+            toast.error("Elige una estación de la lista.");
+            return;
+        }
+        addClockEvent({
+            t: "endgame",
+            at: Date.now(),
+            station: s.name,
+            lat: s.lat,
+            lng: s.lng,
+        });
+        toast.info(`Endgame en ${s.name}: solo queda su zona de escondite.`, {
+            autoClose: 6000,
+        });
+        setForm(null);
+        setStation("");
+    };
+
     const paused = current?.phase === "pausa" || current?.phase === "descanso";
     const running = current && current.phase !== "encontrado";
 
@@ -231,6 +266,7 @@ export const GameClock = () => {
                         "bg-amber-200",
                     mounted && current?.phase === "move" && "bg-violet-200",
                     mounted && paused && "bg-slate-300",
+                    mounted && endgame.active && "bg-red-200",
                 )}
                 onClick={() => setOpen(true)}
                 title="Reloj de partida"
@@ -269,6 +305,11 @@ export const GameClock = () => {
                                     {current.finalMs !== null &&
                                         ` · con cartas de tiempo: ${formatDuration(current.finalMs)}`}
                                 </div>
+                                {endgame.active && (
+                                    <div className="text-sm text-red-500 font-semibold">
+                                        Endgame en {endgame.active.station}
+                                    </div>
+                                )}
                                 {current.phase === "move" && (
                                     <div className="text-xs text-violet-500">
                                         Durante el Move los buscadores se quedan
@@ -315,6 +356,35 @@ export const GameClock = () => {
                                         >
                                             Move
                                         </Button>
+                                        {!endgame.used &&
+                                            current.phase === "buscando" && (
+                                                <Button
+                                                    variant="outline"
+                                                    onClick={() =>
+                                                        setForm("endgame")
+                                                    }
+                                                >
+                                                    Endgame
+                                                </Button>
+                                            )}
+                                        {endgame.active && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => {
+                                                    if (
+                                                        confirm(
+                                                            "¿Cancelar el endgame? No se podrá volver a usar en esta ronda.",
+                                                        )
+                                                    )
+                                                        addClockEvent({
+                                                            t: "endgame-cancel",
+                                                            at: Date.now(),
+                                                        });
+                                                }}
+                                            >
+                                                Cancelar endgame
+                                            </Button>
+                                        )}
                                         <Button
                                             onClick={() => setForm("found")}
                                         >
@@ -352,6 +422,7 @@ export const GameClock = () => {
                         {form === "round" && (
                             <div className="flex flex-col gap-2">
                                 <Input
+                                    debounce={0}
                                     placeholder="¿Quién se esconde?"
                                     value={hider}
                                     onChange={(e) => setHider(e.target.value)}
@@ -384,6 +455,8 @@ export const GameClock = () => {
                                     mientras dura el Move.
                                 </p>
                                 <Input
+                                    debounce={0}
+                                    ref={stationInput}
                                     list="move-stations"
                                     placeholder="Estación revelada"
                                     value={station}
@@ -407,6 +480,47 @@ export const GameClock = () => {
                                         Cancelar
                                     </Button>
                                     <Button onClick={doMove}>Hacer Move</Button>
+                                </div>
+                            </div>
+                        )}
+
+                        {form === "endgame" && (
+                            <div className="flex flex-col gap-2 text-sm">
+                                <p>
+                                    Úsalo solo cuando el escondido os confirme
+                                    que estáis en su zona de escondite. Se
+                                    vuelve a abrir toda la zona de esa estación
+                                    (aunque alguna pregunta la hubiera
+                                    descartado) y se bloquea el resto del mapa.
+                                </p>
+                                <p className="text-orange-500">
+                                    Solo se puede usar una vez por ronda y queda
+                                    apuntado en el reloj (también en la partida
+                                    compartida).
+                                </p>
+                                <Input
+                                    debounce={0}
+                                    ref={stationInput}
+                                    list="endgame-stations"
+                                    placeholder="Estación del escondido"
+                                    value={station}
+                                    onChange={(e) => setStation(e.target.value)}
+                                />
+                                <datalist id="endgame-stations">
+                                    {stations.map((s) => (
+                                        <option key={s.name} value={s.name} />
+                                    ))}
+                                </datalist>
+                                <div className="flex gap-2 justify-end">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setForm(null)}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button onClick={startEndgame}>
+                                        Empezar endgame
+                                    </Button>
                                 </div>
                             </div>
                         )}
@@ -461,6 +575,27 @@ export const GameClock = () => {
                                                     {r.moves
                                                         ? `${r.moves} Move`
                                                         : ""}
+                                                    {(() => {
+                                                        const ev = roundEvents[
+                                                            i
+                                                        ]?.find(
+                                                            (e) =>
+                                                                e.t ===
+                                                                "endgame",
+                                                        );
+                                                        if (
+                                                            !ev ||
+                                                            ev.t !== "endgame"
+                                                        )
+                                                            return "";
+                                                        const cancelled =
+                                                            roundEvents[i].some(
+                                                                (e) =>
+                                                                    e.t ===
+                                                                    "endgame-cancel",
+                                                            );
+                                                        return ` · endgame: ${ev.station}${cancelled ? " (cancelado)" : ""}`;
+                                                    })()}
                                                     {best === r && " · gana"}
                                                 </td>
                                             </tr>

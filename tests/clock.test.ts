@@ -4,6 +4,7 @@ import {
     type ClockEvent,
     clockStatus,
     formatDuration,
+    roundEndgame,
     roundStatus,
 } from "@/lib/clock";
 
@@ -88,5 +89,42 @@ describe("reloj de partida", () => {
     it("formatea los tiempos", () => {
         expect(formatDuration(65_000)).toBe("01:05");
         expect(formatDuration(3_725_000)).toBe("1:02:05");
+    });
+
+    it("endgame: una vez por ronda, se puede cancelar y acaba al encontrarle", () => {
+        const eg: ClockEvent = {
+            t: "endgame",
+            at: at(100),
+            station: "Sol",
+            lat: 40.4168,
+            lng: -3.7038,
+        };
+        expect(roundEndgame(round)).toMatchObject({
+            active: null,
+            used: false,
+        });
+        expect(roundEndgame([...round, eg]).active?.station).toBe("Sol");
+        const cancelled = roundEndgame([
+            ...round,
+            eg,
+            { t: "endgame-cancel", at: at(110) },
+        ]);
+        expect(cancelled).toMatchObject({ active: null, used: true });
+        expect(
+            roundEndgame([
+                ...round,
+                eg,
+                { t: "found", at: at(120), bonusMinutes: 0 },
+            ]).active,
+        ).toBeNull();
+        // En la ronda siguiente se puede volver a usar.
+        expect(
+            roundEndgame([
+                ...round,
+                eg,
+                { t: "found", at: at(120), bonusMinutes: 0 },
+                { t: "round", at: at(200), hider: "Ana", hidingMinutes: 60 },
+            ]).used,
+        ).toBe(false);
     });
 });
