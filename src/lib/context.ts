@@ -146,6 +146,67 @@ export const questionModified = (..._: any[]) => {
 export const leafletMapContext = atom<Map | null>(null);
 
 export const defaultUnit = persistentAtom<Units>("defaultUnit", "kilometers");
+/** En modo escondido: la posición sigue al GPS del móvil. */
+export const hiderFollowGps = persistentAtom<boolean>("hiderFollowGps", true, {
+    encode: String,
+    decode: (x) => x !== "false",
+});
+
+/**
+ * Preguntas ya respondidas en modo escondido (clave → firma de la pregunta).
+ * Las preguntas se responden con la posición del momento de contestar: si el
+ * escondido se mueve después, no cambian.
+ */
+export interface HiderAnswer {
+    sig: string;
+    answer: Record<string, unknown>;
+}
+export const hiderAnswered = persistentAtom<Record<string, HiderAnswer>>(
+    "hiderAnswered",
+    {},
+    {
+        encode: JSON.stringify,
+        decode: (x) => {
+            try {
+                const v = JSON.parse(x);
+                return v && typeof v === "object" ? v : {};
+            } catch {
+                return {};
+            }
+        },
+    },
+);
+
+/** Campos que son la respuesta (o solo de presentación), fuera de la firma. */
+const ANSWER_FIELDS = new Set([
+    "within",
+    "same",
+    "hiderCloser",
+    "warmer",
+    "location",
+    "lengthComparison",
+    "collapsed",
+    "hidden",
+    "drag",
+    "zoneName",
+]);
+
+/** Campos que guardan la respuesta del escondido. */
+export const HIDER_ANSWER_FIELDS = [
+    "within",
+    "same",
+    "hiderCloser",
+    "warmer",
+    "location",
+    "lengthComparison",
+] as const;
+
+/** Firma de una pregunta sin su respuesta: si cambia, hay que volver a responder. */
+export const questionSignature = (q: { id: string; data: unknown }) =>
+    JSON.stringify({ id: q.id, data: q.data }, (k, v) =>
+        ANSWER_FIELDS.has(k) ? undefined : v,
+    );
+
 export const hiderMode = persistentAtom<
     | false
     | {

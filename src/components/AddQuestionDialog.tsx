@@ -27,6 +27,7 @@ import {
     CATALOG,
     catalogIdOf,
     categoryAvailable,
+    houseRules,
 } from "@/maps/catalog";
 
 /**
@@ -51,6 +52,7 @@ export const AddQuestionDialog = ({
 }) => {
     const $isLoading = useStore(isLoading);
     const $gameSize = useStore(gameSize);
+    useStore(houseRules); // Las listas cambian al activar o quitar las categorías propias.
     const $newQuestionsAtGps = useStore(newQuestionsAtGps);
     const [open, setOpen] = React.useState(false);
 

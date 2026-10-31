@@ -126,6 +126,11 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 - Si una pregunta ya hecha no existe en el tamaño actual, se conserva y se marca «(no existe en este tamaño)».
 - Las variantes del juego original que no se usan en Madrid (7-Eleven, gran ciudad, costa…) ya no salen; las personalizadas van en su propio grupo.
 
+## Categorías propias y modo escondido
+
+- La configuración tiene un interruptor «Categorías propias de Madrid» (Mercadona, El Corte Inglés, plazas de toros…). Si está quitado, no salen en los desplegables, en el randomize ni en los tentáculos. Viaja con la configuración compartida.
+- Modo escondido con GPS: al activarlo se coloca en tu posición y la sigue (cada 25 m o 20 s). Cada pregunta se responde una sola vez, con la posición del momento en que llega; si el escondido se mueve después, la respuesta no cambia (se vuelve a responder solo si cambia la pregunta). Hay un botón para volver a responderlas todas desde la posición actual.
+
 ## Endgame
 
 - Botón «Endgame» en el reloj, mientras se busca. Se usa solo cuando el escondido confirma que los buscadores han llegado a su zona: se elige su estación y el mapa queda reducido a la zona de escondite entera de esa estación (aunque alguna pregunta la hubiera recortado); el resto se bloquea.

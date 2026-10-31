@@ -24,6 +24,8 @@ import {
     displayHidingZonesOptions,
     followMe,
     gameSize,
+    HIDER_ANSWER_FIELDS,
+    hiderAnswered,
     hiderMode,
     hidingRadius,
     hidingRadiusUnits,
@@ -36,6 +38,7 @@ import {
     polyGeoJSON,
     questionFinishedMapData,
     questions,
+    questionSignature,
     showStationMarkers,
     showTransitLines,
     thunderforestApiKey,
@@ -200,9 +203,28 @@ export const Map = ({ className }: { className?: string }) => {
         }
 
         if ($hiderMode !== false) {
+            // Cada pregunta se responde una vez, con la posición de ese
+            // momento; solo se vuelve a responder si cambia la pregunta.
+            const answered = { ...hiderAnswered.get() };
             for (const question of $questions) {
+                const data = question.data as Record<string, unknown>;
+                const saved = answered[question.key];
+                if (saved && saved.sig === questionSignature(question)) {
+                    // Ya respondida: se mantiene la respuesta de entonces.
+                    Object.assign(data, saved.answer);
+                    continue;
+                }
                 await hiderifyQuestion(question);
+                answered[question.key] = {
+                    sig: questionSignature(question),
+                    answer: Object.fromEntries(
+                        HIDER_ANSWER_FIELDS.filter((k) => k in data).map(
+                            (k) => [k, data[k]],
+                        ),
+                    ),
+                };
             }
+            hiderAnswered.set(answered);
 
             triggerLocalRefresh.set(Math.random()); // Refresh the question sidebar with new information but not this map
         }

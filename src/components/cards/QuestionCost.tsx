@@ -29,6 +29,7 @@ import {
     CATEGORY_INFO,
     categoryOf,
     costMultiplier,
+    houseRules,
     randomizeQuestion,
     unaskedEntries,
 } from "@/maps/catalog";
@@ -46,6 +47,7 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
     const $questions = useStore(questions);
     const $isLoading = useStore(isLoading);
     const $gameSize = useStore(gameSize);
+    useStore(houseRules); // Las listas cambian al activar o quitar las categorías propias.
     // Las preguntas de antes de un Move siguen contando para el coste.
     const $history = useStore(roundHistory);
     const all = roundQuestions($questions, $history);
@@ -83,7 +85,9 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
             </div>
             {entry && !availableIn(entry, $gameSize) && (
                 <div className="text-orange-400">
-                    Esta pregunta no existe en partida {SIZE_LABEL[$gameSize]}.
+                    {entry.house && !houseRules.get()
+                        ? "Las categorías propias de Madrid están desactivadas en esta partida."
+                        : `Esta pregunta no existe en partida ${SIZE_LABEL[$gameSize]}.`}
                 </div>
             )}
             {entry?.note && (

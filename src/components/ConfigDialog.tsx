@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     Dialog,
     DialogContent,
@@ -40,6 +41,7 @@ import {
 } from "@/lib/context";
 import { shareOrFallback } from "@/lib/utils";
 import type { GameSize } from "@/maps/catalog";
+import { houseRules } from "@/maps/catalog";
 
 const download = (name: string, text: string) => {
     const blob = new Blob([text], { type: "application/json" });
@@ -102,6 +104,7 @@ export const ConfigDialog = () => {
     const $active = useStore(activeConfig);
     const $saved = useStore(savedConfigs);
     const $gameSize = useStore(gameSize);
+    const $houseRules = useStore(houseRules);
     const $isLoading = useStore(isLoading);
     const [open, setOpen] = useState(false);
     const [pending, setPending] = useState<{
@@ -292,6 +295,16 @@ export const ConfigDialog = () => {
                                             </ToggleGroupItem>
                                         ))}
                                     </ToggleGroup>
+                                    <label className="flex items-center gap-2 text-sm pt-2">
+                                        <Checkbox
+                                            checked={$houseRules}
+                                            onCheckedChange={(c) =>
+                                                houseRules.set(c === true)
+                                            }
+                                        />
+                                        Categorías propias de Madrid (Mercadona,
+                                        El Corte Inglés, plazas de toros…)
+                                    </label>
                                 </div>
 
                                 <Separator />

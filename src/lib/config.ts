@@ -34,6 +34,7 @@ import {
 import { compress, decompress } from "@/lib/utils";
 import { adminFeatures } from "@/maps/api/local";
 import type { GameSize } from "@/maps/catalog";
+import { houseRules } from "@/maps/catalog";
 
 export const SIZE_INFO: Record<
     GameSize,
@@ -74,6 +75,8 @@ export const gameConfigSchema = z.object({
     stationTypes: z.array(z.string()).optional(),
     disabledLines: z.array(z.string()).default([]),
     disabledStations: z.array(z.string()).default([]),
+    /** Categorías propias de Madrid (reglas de casa). */
+    houseRules: z.boolean().default(true),
 });
 export type GameConfig = z.infer<typeof gameConfigSchema>;
 
@@ -276,6 +279,7 @@ export const applyConfig = async (input: GameConfig) => {
     displayHidingZonesOptions.set(types.length ? types : [ALL_STATIONS]);
     disabledLines.set(config.disabledLines);
     disabledStations.set(config.disabledStations);
+    houseRules.set(config.houseRules);
 
     activeConfig.set({ ...config, areaKey: areaKey(poly) });
     // Al final: vaciar las preguntas hace que el mapa se redibuje con la zona nueva.
@@ -333,6 +337,7 @@ export const captureConfig = (name: string, description = ""): GameConfig => {
         stationTypes: displayHidingZonesOptions.get(),
         disabledLines: disabledLines.get(),
         disabledStations: disabledStations.get(),
+        houseRules: houseRules.get(),
     });
 };
 
@@ -434,6 +439,7 @@ export const describeConfig = (config: GameConfig) => {
         `zonas de ${radius < 1 ? `${radius * 1000} m` : `${radius} km`}`,
         `${size.hidingMinutes} min para esconderse`,
     ];
+    if (!config.houseRules) parts.push("sin categorías propias");
     if (config.disabledLines.length)
         parts.push(`sin ${config.disabledLines.join(", ")}`);
     return parts.join(" · ");

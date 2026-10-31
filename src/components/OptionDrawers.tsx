@@ -26,6 +26,7 @@ import {
     disabledStations,
     displayHidingZonesOptions,
     followMe,
+    hiderAnswered,
     hiderMode,
     hidingRadius,
     hidingRadiusUnits,
@@ -53,6 +54,7 @@ import { questionsSchema } from "@/maps/schema";
 
 import { ConfigDialog } from "./ConfigDialog";
 import { GameClock } from "./GameClock";
+import { HiderGpsControls, HiderGpsTracker, startHiderMode } from "./HiderGps";
 import { LatitudeLongitude } from "./LatLngPicker";
 import { Button } from "./ui/button";
 import { Checkbox } from "./ui/checkbox";
@@ -326,6 +328,7 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                     e.target.value = "";
                 }}
             />
+            <HiderGpsTracker />
             <GameClock />
             <ConfigDialog />
             <Button
@@ -717,24 +720,18 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                     checked={!!$hiderMode}
                                     onCheckedChange={() => {
                                         if ($hiderMode === false) {
-                                            const $leafletMapContext =
-                                                leafletMapContext.get();
-
-                                            if ($leafletMapContext) {
-                                                const center =
-                                                    $leafletMapContext.getCenter();
-                                                hiderMode.set({
-                                                    latitude: center.lat,
-                                                    longitude: center.lng,
-                                                });
-                                            } else {
-                                                hiderMode.set({
-                                                    latitude: 0,
-                                                    longitude: 0,
-                                                });
-                                            }
+                                            const center = leafletMapContext
+                                                .get()
+                                                ?.getCenter();
+                                            startHiderMode({
+                                                latitude:
+                                                    center?.lat ?? 40.4168,
+                                                longitude:
+                                                    center?.lng ?? -3.7038,
+                                            });
                                         } else {
                                             hiderMode.set(false);
+                                            hiderAnswered.set({});
                                         }
                                     }}
                                 />
@@ -764,6 +761,9 @@ export const OptionDrawers = ({ className }: { className?: string }) => {
                                         }}
                                         label={t("Posición del escondido")}
                                     />
+                                    <div className="pt-2">
+                                        <HiderGpsControls />
+                                    </div>
                                     {!autoSave && (
                                         <SidebarMenuItem>
                                             <SidebarMenuButton

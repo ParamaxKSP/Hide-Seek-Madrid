@@ -25,7 +25,7 @@ import {
     triggerLocalRefresh,
 } from "@/lib/context";
 import { cn } from "@/lib/utils";
-import { typeChoices } from "@/maps/catalog";
+import { houseRules, typeChoices } from "@/maps/catalog";
 import { ADMIN_LEVEL_OPTIONS } from "@/maps/madrid-categories";
 import {
     determineMatchingBoundary,
@@ -53,6 +53,7 @@ export const MatchingQuestionComponent = ({
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $isLoading = useStore(isLoading);
     const $gameSize = useStore(gameSize);
+    useStore(houseRules); // Las listas cambian al activar o quitar las categorías propias.
     const $customInitPref = useStore(customInitPreference);
     const [customDialogOpen, setCustomDialogOpen] = React.useState(false);
     const [pendingCustomType, setPendingCustomType] = React.useState<

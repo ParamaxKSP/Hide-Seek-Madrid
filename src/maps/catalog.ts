@@ -4,6 +4,8 @@
  *  - saber cuántas veces se ha hecho ya una pregunta (el coste se multiplica),
  *  - sortear otra pregunta no hecha de la misma categoría (randomize).
  */
+import { persistentAtom } from "@nanostores/persistent";
+
 import { t } from "@/i18n";
 import type { Question, QuestionCategory } from "@/maps/schema";
 
@@ -28,6 +30,15 @@ export const CATEGORY_INFO: Record<QuestionCategory, CategoryInfo> = {
     photo: { label: "Foto", draw: 1, keep: 1 },
 };
 
+/**
+ * Reglas de casa: las categorías propias de Madrid (Mercadona, El Corte
+ * Inglés, plazas de toros…). Se activan o desactivan en la configuración.
+ */
+export const houseRules = persistentAtom<boolean>("houseRules", true, {
+    encode: String,
+    decode: (x) => x !== "false",
+});
+
 export interface CatalogEntry {
     id: string;
     category: QuestionCategory;
@@ -38,6 +49,8 @@ export interface CatalogEntry {
     note?: string;
     /** Tamaños de partida en los que existe (por defecto, todos). */
     sizes?: GameSize[];
+    /** Categoría propia de Madrid (regla de casa). */
+    house?: boolean;
 }
 
 const match = (
@@ -134,7 +147,10 @@ export const CATALOG: CatalogEntry[] = [
         "En la Comunidad de Madrid la respuesta siempre es sí.",
     ),
     ...PLACES.map(([k, l]) => match(k, l, { type: `${k}-full` })),
-    ...MADRID.map(([k, l]) => match(`madrid-${k}`, l, { type: `madrid-${k}` })),
+    ...MADRID.map(([k, l]) => ({
+        ...match(`madrid-${k}`, l, { type: `madrid-${k}` }),
+        house: true,
+    })),
 
     // --- Measuring (robar 3, quedarse 1) ---
     measure("airport", "Aeropuerto comercial", { type: "airport" }),
@@ -157,9 +173,10 @@ export const CATALOG: CatalogEntry[] = [
     measure("madrid-water", "Masa de agua", { type: "madrid-water" }),
     measure("coastline", "Costa", undefined, NO_BORDER),
     ...PLACES.map(([k, l]) => measure(k, l, { type: `${k}-full` })),
-    ...MADRID.map(([k, l]) =>
-        measure(`madrid-${k}`, l, { type: `madrid-${k}` }),
-    ),
+    ...MADRID.map(([k, l]) => ({
+        ...measure(`madrid-${k}`, l, { type: `madrid-${k}` }),
+        house: true,
+    })),
     measure("madrid-rivers", "Río", { type: "madrid-rivers" }),
 
     // --- Radar (robar 2, quedarse 1) ---
@@ -227,6 +244,7 @@ export const CATALOG: CatalogEntry[] = [
                 },
             },
             sizes: km === 25 ? LARGE : MEDIUM_UP,
+            house: k.startsWith("madrid-"),
         }),
     ),
     {
@@ -360,7 +378,8 @@ export const costMultiplier = (questions: Question[], key: number): number => {
 };
 
 export const availableIn = (entry: CatalogEntry, size: GameSize) =>
-    !entry.sizes || entry.sizes.includes(size);
+    (!entry.house || houseRules.get()) &&
+    (!entry.sizes || entry.sizes.includes(size));
 
 /** Valores de las categorías propias de Madrid (van en su propio grupo). */
 const MADRID_VALUES = new Set(MADRID.map(([k]) => `madrid-${k}`));
@@ -421,7 +440,7 @@ export const typeChoices = (
             (e) => e.category === category && e.make?.data[field] === current,
         );
         options[current] = entry
-            ? t("{label} (no existe en este tamaño)", { label: t(entry.label) })
+            ? t("{label} (no está en esta partida)", { label: t(entry.label) })
             : current;
     }
     const groups: Record<string, { options: Record<string, string> }> = {};

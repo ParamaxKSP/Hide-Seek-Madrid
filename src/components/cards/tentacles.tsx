@@ -24,7 +24,7 @@ import {
 import { gameSize } from "@/lib/context";
 import { cn, mapToObj } from "@/lib/utils";
 import { findTentacleLocations } from "@/maps/api";
-import { entryForType, typeChoices } from "@/maps/catalog";
+import { entryForType, houseRules, typeChoices } from "@/maps/catalog";
 import { arcDistance } from "@/maps/geo-utils";
 import { MADRID_TENTACLE_KM, madridCategoryOf } from "@/maps/madrid-categories";
 import type {
@@ -49,6 +49,7 @@ export const TentacleQuestionComponent = ({
     const $drawingQuestionKey = useStore(drawingQuestionKey);
     const $isLoading = useStore(isLoading);
     const $gameSize = useStore(gameSize);
+    useStore(houseRules); // Las listas cambian al activar o quitar las categorías propias.
     const label = `${t("Tentáculos")}
     ${
         $questions

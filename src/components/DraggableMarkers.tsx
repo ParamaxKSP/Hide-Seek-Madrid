@@ -8,6 +8,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { t } from "@/i18n";
 import {
     autoSave,
+    hiderAnswered,
     hiderMode,
     questionModified,
     questions,
@@ -16,6 +17,7 @@ import {
 } from "@/lib/context";
 import type { ICON_COLORS } from "@/maps/api";
 
+import { HiderGpsControls } from "./HiderGps";
 import { LatitudeLongitude } from "./LatLngPicker";
 import {
     MatchingQuestionComponent,
@@ -106,6 +108,7 @@ const ColoredMarker = ({
                                 label={t("Posición del escondido")}
                             />
                         </SidebarMenu>
+                        <HiderGpsControls />
                     </>
                 )}
                 {$questions
@@ -165,11 +168,12 @@ const ColoredMarker = ({
                     <Button // If it's the hider mode marker
                         onClick={() => {
                             hiderMode.set(false);
+                            hiderAnswered.set({});
                         }}
                         variant="destructive"
                         className="font-semibold font-poppins"
                     >
-                        Disable
+                        {t("Desactivar el modo escondido")}
                     </Button>
                 )}
                 {!$autoSave && (
@@ -177,7 +181,7 @@ const ColoredMarker = ({
                         onClick={save}
                         className="bg-blue-600 p-2 rounded-md font-semibold font-poppins transition-shadow duration-500"
                     >
-                        Save
+                        {t("Guardar")}
                     </button>
                 )}
             </DialogContent>
