@@ -14,7 +14,12 @@ import {
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { roundHistory, roundQuestions } from "@/lib/clock";
+import {
+    gameClock,
+    roundEndgame,
+    roundHistory,
+    roundQuestions,
+} from "@/lib/clock";
 import {
     gameSize,
     isLoading,
@@ -50,6 +55,7 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
     useStore(houseRules); // Las listas cambian al activar o quitar las categorías propias.
     // Las preguntas de antes de un Move siguen contando para el coste.
     const $history = useStore(roundHistory);
+    const endgame = roundEndgame(useStore(gameClock)).active;
     const all = roundQuestions($questions, $history);
     const question = $questions.find((q) => q.key === questionKey);
     if (!question) return null;
@@ -88,6 +94,11 @@ export const QuestionCost = ({ questionKey }: { questionKey: number }) => {
                     {entry.house && !houseRules.get()
                         ? "Las categorías propias de Madrid están desactivadas en esta partida."
                         : `Esta pregunta no existe en partida ${SIZE_LABEL[$gameSize]}.`}
+                </div>
+            )}
+            {endgame?.before.includes(questionKey) && (
+                <div className="text-red-400">
+                    Hecha antes del endgame: ya no recorta el mapa.
                 </div>
             )}
             {entry?.note && (

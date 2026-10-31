@@ -25,6 +25,8 @@ export type ClockEvent =
           station: string;
           lat: number;
           lng: number;
+          /** Preguntas hechas antes del endgame: ya no cuentan. */
+          before?: number[];
       }
     | { t: "endgame-cancel"; at: number };
 
@@ -155,6 +157,8 @@ export interface EndgameState {
     lat: number;
     lng: number;
     at: number;
+    /** Claves de las preguntas de antes del endgame (no cuentan). */
+    before: number[];
 }
 
 /**
@@ -176,6 +180,7 @@ export const roundEndgame = (events: ClockEvent[]) => {
                   lat: start.lat,
                   lng: start.lng,
                   at: start.at,
+                  before: start.before ?? [],
               }
             : null;
     return { active, used: !!start, cancelled };

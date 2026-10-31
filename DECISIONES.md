@@ -134,6 +134,7 @@ Versión personalizada del generador de mapas de taibeled/JetLagHideAndSeek (lic
 ## Endgame
 
 - Botón «Endgame» en el reloj, mientras se busca. Se usa solo cuando el escondido confirma que los buscadores han llegado a su zona: se elige su estación y el mapa queda reducido a la zona de escondite entera de esa estación (aunque alguna pregunta la hubiera recortado); el resto se bloquea.
+- Las preguntas hechas antes del endgame dejan de contar (su tarjeta lo indica); las que se hacen durante el endgame siguen recortando la zona de la estación.
 - Una sola vez por ronda, aunque se cancele, y queda apuntado en la tabla de rondas. Para que todos lo vean, el reloj y los Move viajan ahora en la partida compartida (enlace o archivo).
 - Termina al encontrar al escondido o al empezar otra ronda.
 

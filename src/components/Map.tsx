@@ -235,12 +235,33 @@ export const Map = ({ className }: { className?: string }) => {
             }
         });
 
-        // Zona de juego antes de las preguntas (para el endgame).
-        const gameArea = mapGeoData;
+        // Endgame: el escondido ha confirmado su estación. Se parte de su zona
+        // de escondite entera (las preguntas de antes no cuentan) y las
+        // preguntas que se hagan después la siguen recortando.
+        const endgame = roundEndgame(gameClock.get()).active;
+        let toApply = $questions;
+        if (endgame && mapGeoData) {
+            const circle = turf.circle(
+                [endgame.lng, endgame.lat],
+                hidingRadius.get(),
+                { units: hidingRadiusUnits.get(), steps: 64 },
+            );
+            const whole =
+                (mapGeoData as any).type === "FeatureCollection"
+                    ? safeUnion(mapGeoData as any)
+                    : mapGeoData;
+            const area = turf.intersect(
+                turf.featureCollection([circle, whole as any]),
+            );
+            mapGeoData = turf.featureCollection([
+                (area ?? circle) as any,
+            ]) as any;
+            toApply = $questions.filter((q) => !endgame.before.includes(q.key));
+        }
 
         try {
             mapGeoData = await applyQuestionsToMapGeoData(
-                $questions,
+                toApply,
                 mapGeoData,
                 planningModeEnabled.get(),
                 (geoJSONObj, question) => {
@@ -250,27 +271,6 @@ export const Map = ({ className }: { className?: string }) => {
                     geoJSONPlane.addTo(map);
                 },
             );
-
-            // Endgame: el escondido ha confirmado su estación. Solo queda su
-            // zona de escondite entera, aunque las preguntas la recortaran.
-            const endgame = roundEndgame(gameClock.get()).active;
-            if (endgame && gameArea) {
-                const circle = turf.circle(
-                    [endgame.lng, endgame.lat],
-                    hidingRadius.get(),
-                    { units: hidingRadiusUnits.get(), steps: 64 },
-                );
-                const whole =
-                    (gameArea as any).type === "FeatureCollection"
-                        ? safeUnion(gameArea as any)
-                        : gameArea;
-                const area = turf.intersect(
-                    turf.featureCollection([circle, whole as any]),
-                );
-                mapGeoData = turf.featureCollection([
-                    (area ?? circle) as any,
-                ]) as any;
-            }
 
             mapGeoData = {
                 type: "FeatureCollection",

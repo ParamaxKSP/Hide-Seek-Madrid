@@ -244,6 +244,7 @@ export const GameClock = () => {
             station: s.name,
             lat: s.lat,
             lng: s.lng,
+            before: questions.get().map((q) => q.key),
         });
         toast.info(`Endgame en ${s.name}: solo queda su zona de escondite.`, {
             autoClose: 6000,
