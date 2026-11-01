@@ -41,6 +41,7 @@ import {
     questionSignature,
     showStationMarkers,
     showTransitLines,
+    tentacleAvailableArea,
     thunderforestApiKey,
     triggerLocalRefresh,
 } from "@/lib/context";
@@ -48,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { applyQuestionsToMapGeoData, holedMask } from "@/maps";
 import { hiderifyQuestion } from "@/maps";
 import {
+    BLANK_GEOJSON,
     clearCache,
     determineMapBoundaries,
     findPlacesInZone,
@@ -259,6 +261,8 @@ export const Map = ({ className }: { className?: string }) => {
             toApply = $questions.filter((q) => !endgame.before.includes(q.key));
         }
 
+        const baseArea = mapGeoData;
+
         try {
             mapGeoData = await applyQuestionsToMapGeoData(
                 toApply,
@@ -272,9 +276,45 @@ export const Map = ({ className }: { className?: string }) => {
                 },
             );
 
+            // Zona disponible para cada pregunta de tentáculos sin contarla a
+            // ella: así su desplegable solo ofrece respuestas posibles.
+            const areas: Record<number, any> = {};
+            for (const q of toApply) {
+                if (
+                    q.id !== "tentacles" ||
+                    q.data.hidden ||
+                    q.data.vetoed ||
+                    (planningModeEnabled.get() && q.data.drag)
+                )
+                    continue;
+                try {
+                    areas[q.key] = await applyQuestionsToMapGeoData(
+                        toApply.filter((x) => x.key !== q.key),
+                        baseArea,
+                        planningModeEnabled.get(),
+                    );
+                } catch {
+                    // Sin zona calculada: el desplegable enseña todo.
+                }
+            }
+            tentacleAvailableArea.set(areas);
+
+            const empty = !mapGeoData?.features?.length;
+            if (empty) {
+                toast.warning(
+                    t(
+                        "Con estas respuestas no queda ninguna zona posible: revisa la última pregunta.",
+                    ),
+                    { toastId: "no-area" },
+                );
+            }
             mapGeoData = {
                 type: "FeatureCollection",
-                features: [holedMask(mapGeoData!)!],
+                features: [
+                    empty
+                        ? (BLANK_GEOJSON.features[0] as any)
+                        : holedMask(mapGeoData!)!,
+                ],
             };
 
             map.eachLayer((layer: any) => {
@@ -291,7 +331,7 @@ export const Map = ({ className }: { className?: string }) => {
 
             questionFinishedMapData.set(mapGeoData);
 
-            if (autoZoom.get() && focus) {
+            if (autoZoom.get() && focus && !empty) {
                 const bbox = turf.bbox(holedMask(mapGeoData) as any);
                 const bounds = [
                     [bbox[1], bbox[0]],

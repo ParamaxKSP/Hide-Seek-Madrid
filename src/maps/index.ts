@@ -139,7 +139,10 @@ export async function applyQuestionsToMapGeoData(
 
         mapGeoData = await adjustMapGeoDataForQuestion(question, mapGeoData);
 
-        if (mapGeoData.type !== "FeatureCollection") {
+        // Respuesta imposible (no queda nada): colección vacía en vez de null.
+        if (!mapGeoData) {
+            mapGeoData = { type: "FeatureCollection", features: [] };
+        } else if (mapGeoData.type !== "FeatureCollection") {
             mapGeoData = {
                 type: "FeatureCollection",
                 features: [mapGeoData],

@@ -48,15 +48,11 @@ const filterPointsWithinRadius = async (
     );
 };
 
-export const adjustPerTentacle = async (
-    question: TentacleQuestion,
-    mapData: any,
-) => {
-    if (mapData === null) return;
-    if (question.location === false) {
-        throw new Error("Must have a location");
-    }
-
+/**
+ * Zonas de una pregunta de tentáculos: el círculo de la pregunta y, para cada
+ * lugar, la parte del mapa donde ese lugar es el más cercano (Voronoi).
+ */
+export const tentacleRegions = async (question: TentacleQuestion) => {
     const rawPoints =
         question.locationType === "custom"
             ? turf.featureCollection(question.places)
@@ -74,16 +70,10 @@ export const adjustPerTentacle = async (
             : rawPoints;
 
     const voronoi = geoSpatialVoronoi(points);
-
-    const correctPolygon = voronoi.features.find((feature: any) => {
-        if (!question.location) return false;
-        return (
-            feature.properties.site.properties.name ===
-            question.location.properties.name
-        );
-    });
-    if (!correctPolygon) {
-        return mapData;
+    const cells = new Map<string, any>();
+    for (const feature of voronoi.features as any[]) {
+        const name = feature.properties?.site?.properties?.name;
+        if (name !== undefined && !cells.has(name)) cells.set(name, feature);
     }
 
     const circle = await arcBuffer(
@@ -91,6 +81,23 @@ export const adjustPerTentacle = async (
         question.radius,
         question.unit,
     );
+    return { circle, cells };
+};
+
+export const adjustPerTentacle = async (
+    question: TentacleQuestion,
+    mapData: any,
+) => {
+    if (mapData === null) return;
+    if (question.location === false) {
+        throw new Error("Must have a location");
+    }
+
+    const { circle, cells } = await tentacleRegions(question);
+    const correctPolygon = cells.get(question.location.properties.name);
+    if (!correctPolygon) {
+        return mapData;
+    }
 
     return turf.intersect(
         turf.featureCollection([safeUnion(mapData), correctPolygon, circle]),

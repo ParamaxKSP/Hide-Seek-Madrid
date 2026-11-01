@@ -258,6 +258,9 @@ export const displayHidingZonesStyle = persistentAtom<
 >("displayHidingZonesStyle", "zones");
 export const questionFinishedMapData = atom<any>(null);
 
+/** Zona posible según las demás preguntas, para cada pregunta de tentáculos. */
+export const tentacleAvailableArea = atom<Record<number, any>>({});
+
 export const trainStations = atom<StationCircle[]>([]);
 onSet(trainStations, ({ newValue }) => {
     newValue.sort((a, b) => {

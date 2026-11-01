@@ -19,6 +19,7 @@ import {
     isLoading,
     questionModified,
     questions,
+    tentacleAvailableArea,
     triggerLocalRefresh,
 } from "@/lib/context";
 import { gameSize } from "@/lib/context";
@@ -26,7 +27,9 @@ import { cn, mapToObj } from "@/lib/utils";
 import { findTentacleLocations } from "@/maps/api";
 import { entryForType, houseRules, typeChoices } from "@/maps/catalog";
 import { arcDistance } from "@/maps/geo-utils";
+import { safeUnion } from "@/maps/geo-utils";
 import { MADRID_TENTACLE_KM, madridCategoryOf } from "@/maps/madrid-categories";
+import { tentacleRegions } from "@/maps/questions/tentacles";
 import type {
     TentacleQuestion,
     TraditionalTentacleQuestion,
@@ -197,6 +200,7 @@ export const TentacleQuestionComponent = ({
                     }
                 >
                     <TentacleLocationSelector
+                        questionKey={questionKey}
                         data={data}
                         promise={
                             data.locationType === "custom"
@@ -214,10 +218,12 @@ export const TentacleQuestionComponent = ({
 };
 
 const TentacleLocationSelector = ({
+    questionKey,
     data,
     promise,
     disabled,
 }: {
+    questionKey: number;
     data: TentacleQuestion;
     promise: Promise<any>;
     disabled: boolean;
@@ -226,6 +232,66 @@ const TentacleLocationSelector = ({
     const $hiderMode = useStore(hiderMode);
     const locations = use(promise);
     const [filteredFeatures, setFilteredFeatures] = useState<any[]>([]);
+    // Respuestas que dejan zona posible según las demás preguntas
+    // (null: aún sin calcular, se enseñan todas).
+    const area = useStore(tentacleAvailableArea)[questionKey];
+    const [possible, setPossible] = useState<Set<string> | null>(null);
+
+    useEffect(() => {
+        let cancelled = false;
+        setPossible(null);
+        if (!area?.features?.length || filteredFeatures.length === 0) return;
+        (async () => {
+            try {
+                const whole =
+                    area.features.length === 1
+                        ? area.features[0]
+                        : safeUnion(area);
+                const { circle, cells } = await tentacleRegions(data);
+                const big = (f: any) => !!f && turf.area(f) > 1;
+                const ok = new Set<string>();
+                for (const f of filteredFeatures) {
+                    const name = f.properties.name;
+                    const cell = cells.get(name);
+                    if (
+                        cell &&
+                        big(
+                            turf.intersect(
+                                turf.featureCollection([
+                                    whole,
+                                    cell,
+                                    circle,
+                                ] as any),
+                            ),
+                        )
+                    )
+                        ok.add(name);
+                }
+                if (
+                    big(
+                        turf.difference(
+                            turf.featureCollection([whole, circle] as any),
+                        ),
+                    )
+                )
+                    ok.add("false");
+                if (!cancelled) setPossible(ok);
+            } catch {
+                // Si falla el cálculo, se enseñan todas las opciones.
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [area, filteredFeatures, data.lat, data.lng, data.radius, data.unit]);
+
+    const current = data.location ? data.location.properties.name : "false";
+    const show = (name: string) =>
+        possible === null || possible.has(name) || name === current;
+    const label = (name: string, text: string) =>
+        possible !== null && !possible.has(name)
+            ? t("{name} (imposible)", { name: text })
+            : text;
 
     // Filter locations to only those within the radius of the primary location
     useEffect(() => {
@@ -295,11 +361,18 @@ const TentacleLocationSelector = ({
         <Select
             trigger={t("Lugar")}
             options={{
-                false: t("Ninguno dentro"),
-                ...mapToObj(filteredFeatures, (feature: any) => [
-                    feature.properties.name,
-                    feature.properties.name,
-                ]),
+                ...(show("false")
+                    ? { false: label("false", t("Ninguno dentro")) }
+                    : {}),
+                ...mapToObj(
+                    filteredFeatures.filter((f: any) =>
+                        show(f.properties.name),
+                    ),
+                    (feature: any) => [
+                        feature.properties.name,
+                        label(feature.properties.name, feature.properties.name),
+                    ],
+                ),
             }}
             value={data.location ? data.location.properties.name : "false"}
             onValueChange={(value) => {
